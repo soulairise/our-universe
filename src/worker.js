@@ -11,12 +11,12 @@ const MAX_CHARS = 800 // 한 메시지 최대 글자
 const LIMIT_PER_MIN = 12 // 한 주소에서 1분에 보낼 수 있는 질문 수(워커 한 개 기준, 비용 보호용)
 
 const hits = new Map()
-function tooMany(ip) {
+function tooMany(ip, limit = LIMIT_PER_MIN) {
   const now = Date.now()
   const arr = (hits.get(ip) || []).filter((t) => now - t < 60_000)
   arr.push(now)
   hits.set(ip, arr)
-  return arr.length > LIMIT_PER_MIN
+  return arr.length > limit
 }
 
 const json = (obj, status = 200) =>
@@ -94,7 +94,7 @@ function cleanMessages(raw) {
 
 async function chat(req, env, ctx) {
   const ip = req.headers.get('cf-connecting-ip') || 'local'
-  if (tooMany(ip)) return json({ error: 'rate' }, 429)
+  if (tooMany(ip, Number(env.RATE_LIMIT) || LIMIT_PER_MIN)) return json({ error: 'rate' }, 429) // 로컬 측정 때만 RATE_LIMIT 로 늘린다
   let body
   try {
     body = await req.json()
