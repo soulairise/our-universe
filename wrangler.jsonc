@@ -13,7 +13,7 @@
   "workers_dev": true,
   "routes": [ { "pattern": "cosmos.shala.kr", "custom_domain": true } ],
   // 프롬프트 버전 — 트레이스의 version 으로 남아 배포 전후를 가른다
-  "vars": { "PROMPT_VERSION": "v1", "RELEASE": "guide-v1" },
+  "vars": { "PROMPT_VERSION": "v5", "RELEASE": "guide-v5" },
   "observability": { "enabled": true },
   // 과제용 시험 주소 — cosmos.shala.kr 실제 사이트와 따로 (npx wrangler deploy --env guide)
   "env": {
@@ -21,7 +21,7 @@
       "name": "our-universe-guide",
       "routes": [],
       "workers_dev": true,
-      "vars": { "PROMPT_VERSION": "v1", "RELEASE": "guide-v1" }
+      "vars": { "PROMPT_VERSION": "v5", "RELEASE": "guide-v5" }
     }
   }
 }
