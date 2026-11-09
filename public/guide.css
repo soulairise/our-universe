@@ -1,0 +1,34 @@
+/* 우주 길잡이 서랍 — 설정 서랍과 같은 유리 패널, 오른쪽에 붙는다. 휴대폰은 아래 시트. */
+#guide{position:fixed;top:calc(72px + env(safe-area-inset-top,0px));right:calc(18px + env(safe-area-inset-right,0px));width:360px;height:min(560px,calc(100% - 72px - 150px));z-index:6;
+  border-radius:16px;background:var(--glass-strong);border:1px solid var(--line);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  display:flex;flex-direction:column;padding:14px 14px 10px;gap:8px;animation:rise .25s ease}
+#guide[hidden]{display:none}
+#guide .ghead{display:flex;align-items:center;justify-content:space-between}
+#guide .ghead .h3{margin:0}
+#guide .gclose{min-height:36px;padding:0 10px;border-radius:999px;background:none;border:1px solid var(--line);color:var(--muted);cursor:pointer;font-size:13px}
+#guide .gctx{font-size:12px;color:var(--muted)}
+#guide .glog{flex:1;overflow:auto;display:flex;flex-direction:column;gap:10px;padding-right:2px;overscroll-behavior:contain}
+#guide .gmsg{font-size:14px;line-height:1.6;word-break:keep-all;overflow-wrap:anywhere}
+#guide .gu{align-self:flex-end;max-width:85%;padding:8px 12px;border-radius:14px 14px 4px 14px;background:rgba(143,195,255,.14);border:1px solid rgba(143,195,255,.22)}
+#guide .ga{align-self:stretch;color:var(--fg)}
+#guide .ga b{color:var(--sun);font-weight:600}
+#guide .gli{display:block;padding-left:1em;text-indent:-.8em}
+#guide .gli::before{content:'· ';color:var(--muted)}
+#guide .gwait{color:var(--muted);animation:gpulse 1.4s ease-in-out infinite}
+@keyframes gpulse{50%{opacity:.45}}
+#guide .gfb{display:flex;gap:6px;align-items:center;margin-top:6px;font-size:12px;color:var(--muted)}
+#guide .gfb button{min-height:30px;padding:0 10px;border-radius:999px;background:none;border:1px solid var(--line);color:var(--muted);cursor:pointer;font-size:12px}
+#guide .gfb button.on{color:var(--fg);border-color:var(--line-strong)}
+#guide .gfb button:disabled:not(.on){opacity:.4}
+#guide .gform{display:flex;gap:6px;align-items:flex-end}
+#guide textarea{flex:1;resize:none;min-height:44px;max-height:120px;padding:11px 12px;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid var(--line);color:var(--fg);font:inherit;font-size:16px;line-height:1.4}
+#guide .gform button{min-height:44px;padding:0 14px;border-radius:12px;background:var(--sun);color:#1a1206;border:0;font-weight:600;cursor:pointer}
+#guide .gform button:disabled{opacity:.5}
+#guide .gnote{margin:0;font-size:11px;color:var(--muted);line-height:1.4}
+body.tour #guideBtn,body.tour #guide{opacity:0;pointer-events:none}
+@media (max-width:760px){
+  #guide{left:12px;right:12px;width:auto;top:auto;bottom:calc(12px + env(safe-area-inset-bottom,0px));height:min(70vh,560px)}
+  body.guideopen #bottom{opacity:0;pointer-events:none}
+}
+@media (max-width:420px){ #top .iconbtn{padding:0 9px} }
+@media (prefers-reduced-motion:reduce){#guide,#guide .gwait{animation:none}}

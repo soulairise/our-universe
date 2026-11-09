@@ -1,0 +1,7 @@
+node_modules/
+.wrangler/
+.dev.vars
+.env
+# 대화 내용(트레이스)과 실험 원자료는 올리지 않는다
+data/
+js/

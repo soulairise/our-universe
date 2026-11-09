@@ -1,0 +1,49 @@
+/* 이 점에 부치는 글: 보이저 1호 사진 위 모션그래픽 */
+#poem{position:fixed;inset:0;z-index:40;background:#000;color:#eef2fa;opacity:0;transition:opacity 1.6s ease;overflow:hidden}
+#poem[hidden]{display:none!important}
+#poem.in{opacity:1}
+#pStage{position:absolute;inset:0;cursor:pointer;--ex:59.43%;--ey:51.92%}
+#pStage i{box-sizing:border-box}
+/* 사진 속 지구가 늘 같은 화면 자리(59.43%, 51.92%)에 오고, 그 점을 중심으로 확대된다 */
+#pBg{position:absolute;inset:0;transform-origin:var(--ex) var(--ey);will-change:transform}
+#pBg img{position:absolute;left:0;top:0;width:100%;height:100%;max-width:none;
+  -webkit-mask-image:radial-gradient(ellipse 90% 90% at 59.43% 51.92%,#000 58%,transparent 100%);mask-image:radial-gradient(ellipse 90% 90% at 59.43% 51.92%,#000 58%,transparent 100%)}
+#pBg .pbeam{position:absolute;left:var(--ex);top:var(--ey);width:16vmax;height:320vmax;margin:-160vmax 0 0 -8vmax;transform:rotate(8.7deg);opacity:0;
+  background:linear-gradient(90deg,transparent,rgba(255,236,214,.34) 42%,rgba(255,244,230,.5) 50%,rgba(255,236,214,.34) 58%,transparent);mix-blend-mode:screen;filter:blur(6px)}
+#pBg .pbeam.red{background:linear-gradient(90deg,transparent,rgba(255,40,40,.42) 40%,rgba(255,70,60,.55) 50%,rgba(255,40,40,.42) 60%,transparent);mix-blend-mode:normal}
+#pBg .pglow{position:absolute;left:var(--ex);top:var(--ey);width:18vmin;height:18vmin;margin:-9vmin 0 0 -9vmin;border-radius:50%;opacity:0;
+  background:radial-gradient(circle,rgba(190,225,255,.95) 0,rgba(110,170,255,.45) 14%,rgba(80,140,255,.12) 40%,transparent 70%);mix-blend-mode:screen}
+#pCv{position:absolute;inset:0;pointer-events:none}
+#pVig{position:absolute;inset:0;pointer-events:none;opacity:0;background:radial-gradient(ellipse at var(--ex) var(--ey),transparent 0,rgba(0,0,0,.55) 30%,#000 70%)}
+#pRing{position:absolute;left:var(--ex);top:var(--ey);width:40px;height:40px;margin:-20px 0 0 -20px;border-radius:50%;border:1.5px solid rgba(170,215,255,.9);pointer-events:none;opacity:0;animation:pring 2.6s ease-in-out infinite}
+@keyframes pring{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
+#pClose{position:absolute;top:calc(16px + env(safe-area-inset-top,0px));right:calc(16px + env(safe-area-inset-right,0px));z-index:2}
+/* 글: 아래쪽 가운데, 읽기 쉽도록 아래로 짙어지는 그늘 */
+#pText{position:absolute;left:0;right:0;bottom:0;padding:120px max(24px,calc((100% - 760px)/2)) calc(96px + env(safe-area-inset-bottom,0px));pointer-events:none;
+  background:linear-gradient(transparent,rgba(0,0,0,.55) 45%,rgba(0,0,0,.78));display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center}
+#pText.in{animation:ptin 1.4s ease}
+@keyframes ptin{from{opacity:0}to{opacity:1}}
+#pText h2{margin:0;font-family:var(--font-display);font-size:34px;font-weight:700;color:#d8e8ff;letter-spacing:.01em}
+#pText .epi{margin:8px 0 0;font-family:var(--font-display);font-size:22px;line-height:1.6;color:#f3f6fb;max-width:640px;word-break:keep-all;animation:ptin 2.4s ease .8s both}
+#pText cite{font-style:normal;font-size:13px;color:#aab4c8;animation:ptin 2s ease 1.8s both}
+#pText p{margin:0;font-family:var(--font-display);font-size:22px;line-height:1.6;color:#f3f6fb;word-break:keep-all;opacity:0;transform:translateY(10px);transition:opacity 1.3s ease,transform 1.3s ease,color 1.3s ease}
+#pText p.on{opacity:.62;transform:none}
+#pText p.now{opacity:1;color:#fff}
+#pText .pend{pointer-events:auto;display:flex;flex-direction:column;align-items:center;gap:14px;margin-top:14px;animation:ptin 1.6s ease 1s both}
+#pText .pcredit{font-family:var(--font-body)!important;font-size:12px!important;color:#aab4c8!important;opacity:1!important;transform:none!important}
+#pText .pbtns{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+#pBar{position:absolute;left:50%;bottom:calc(22px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);display:flex;align-items:center;gap:10px;z-index:2}
+#pBar .round:disabled{opacity:.3;cursor:default}
+#pBar svg{width:14px;height:14px}
+#pPlay .pl{display:none}#pPlay.paused .pl{display:block}#pPlay.paused .pa{display:none}
+#pProg{width:min(220px,40vw);height:3px;border-radius:2px;background:rgba(255,255,255,.18);overflow:hidden}
+#pProg i{display:block;height:100%;width:0;background:#cfe3ff;transition:width .8s ease}
+body.poemon #vPhoto,body.poemon #top,body.poemon #bottom{visibility:hidden}
+@media (max-width:760px){
+  #pText{padding:90px 20px calc(86px + env(safe-area-inset-bottom,0px))}
+  #pText h2{font-size:26px}
+  #pText .epi,#pText p{font-size:17.5px}
+}
+@media (prefers-reduced-motion:reduce){ #pText p,#pText.in{transition:none;animation:none} #pRing{animation:none} }
+/* 세로로 긴 휴대폰: 글이 아래 절반을 쓰므로 사진을 위로 올려 지구가 화면 위쪽(약 38%)에 오게 */
+@media (max-width:760px) and (orientation:portrait){ #pStage{top:-30vh} }

@@ -1,0 +1,1543 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#03050a">
+<meta name="description" content="지구에서 시작해 태양계 전체로. 실제 궤도 값으로 움직이는 3D 태양계와 내 생일의 하늘.">
+<meta property="og:title" content="우리의 우주">
+<meta property="og:description" content="실제 궤도 값으로 움직이는 3D 태양계 — 내 생일엔 행성이 어디 있었을까?">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Ccircle cx='16' cy='16' r='7' fill='%23f4b968'/%3E%3Cellipse cx='16' cy='16' rx='14' ry='5' fill='none' stroke='%23e9eef8' stroke-width='1.5' transform='rotate(-20 16 16)'/%3E%3C/svg%3E">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}</style>
+</head>
+<body>
+<title>우리의 우주</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+KR:wght@400;500;600&display=swap">
+<style>
+/* 레이아웃: 화면 전체가 우주. 위=이름과 언어·설정, 아래=천체 고르기와 시간 막대, 오른쪽=천체 카드, 왼쪽=설정 서랍 */
+:root{
+  color-scheme: dark;
+  --void:#03050a;
+  --glass:rgba(12,16,27,.78);
+  --glass-strong:rgba(14,19,31,.94);
+  --line:rgba(170,190,230,.14);
+  --line-strong:rgba(170,190,230,.28);
+  --fg:#e9eef8;
+  --muted:#8f9ab3;
+  --sun:#f4b968;
+  --ice:#8fc3ff;
+  --font-display:'Gowun Batang','Noto Serif KR','Noto Serif JP','Noto Serif SC',Georgia,serif;
+  --font-body:'IBM Plex Sans KR','Apple SD Gothic Neo','Hiragino Sans','PingFang SC','Malgun Gothic',system-ui,sans-serif;
+  --font-mono:'IBM Plex Mono',ui-monospace,Menlo,monospace;
+}
+html,body{height:100%}
+[hidden]{display:none!important}
+body{background:var(--void);color:var(--fg);font-family:var(--font-body);overflow:hidden;font-size:14px;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit}
+#scene{position:fixed;inset:0;width:100%;height:100%;display:block;touch-action:none}
+#scene.hover{cursor:pointer}
+
+/* 이름표 */
+#labels{position:fixed;inset:0;pointer-events:none;overflow:hidden}
+.lbl{position:absolute;left:0;top:0;display:flex;align-items:center;gap:7px;pointer-events:auto;cursor:pointer;will-change:transform;user-select:none;-webkit-user-select:none}
+.lbl i{width:9px;height:9px;border-radius:50%;border:1.5px solid var(--c,#fff);flex:0 0 auto;opacity:.85}
+.lbl span{font-size:12.5px;white-space:nowrap;color:var(--fg);text-shadow:0 0 6px #000,0 0 2px #000;padding:2px 7px;border-radius:999px;transition:background .15s}
+.lbl.moon span{font-size:11px;color:#b9c2d6}
+.lbl.moon i{width:6px;height:6px;border-width:1px}
+.lbl.big i{visibility:hidden}
+.lbl:hover span,.lbl.hover span{background:rgba(255,255,255,.12)}
+.lbl.on span{background:rgba(244,185,104,.18);color:var(--sun)}
+.lbl:focus-visible{outline:none}
+.lbl:focus-visible span{outline:2px solid var(--ice)}
+
+/* 위쪽 */
+#top{position:fixed;top:calc(14px + env(safe-area-inset-top,0px));left:calc(18px + env(safe-area-inset-left,0px));right:calc(18px + env(safe-area-inset-right,0px));display:flex;justify-content:space-between;align-items:flex-start;gap:12px;pointer-events:none}
+#brand{pointer-events:auto;cursor:pointer;background:none;border:0;padding:0;text-align:left}
+#brand .word{white-space:nowrap;font-family:var(--font-display);font-size:26px;font-weight:700;letter-spacing:.01em;line-height:1.1}
+#brand .sub{font-size:11px;letter-spacing:.22em;color:var(--muted);margin-top:3px;text-transform:uppercase}
+.topbtns{display:flex;gap:8px;pointer-events:auto}
+.iconbtn{display:inline-flex;align-items:center;gap:7px;height:36px;padding:0 12px;border-radius:999px;background:var(--glass);border:1px solid var(--line);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);cursor:pointer;font-size:13px}
+.iconbtn:hover{border-color:var(--line-strong)}
+.iconbtn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.6}
+#langSel{appearance:none;-webkit-appearance:none;width:100%;background:transparent;border:0;color:var(--fg);font:inherit;font-size:14px;cursor:pointer;padding:10px 30px 10px 38px}
+.langwrap{position:relative;border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.03)}
+.langwrap:hover{border-color:var(--line-strong)}
+.langwrap svg{position:absolute;left:12px;top:50%;width:16px;height:16px;transform:translateY(-50%);fill:none;stroke:currentColor;stroke-width:1.6;opacity:.8;pointer-events:none}
+.langwrap::after{content:'';position:absolute;right:14px;top:50%;width:7px;height:7px;border-right:1.6px solid var(--muted);border-bottom:1.6px solid var(--muted);transform:translateY(-70%) rotate(45deg);pointer-events:none}
+body.setopen #hCard{display:none!important}
+#langSel option{background:#0e1320;color:#e9eef8}
+:focus-visible{outline:2px solid var(--ice);outline-offset:2px}
+
+/* 아래: 천체 고르기 + 시간 막대 */
+#bottom{position:fixed;left:0;right:0;bottom:0;padding:0 max(16px,env(safe-area-inset-right,0px)) calc(14px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px));display:flex;flex-direction:column;align-items:center;gap:10px;pointer-events:none;
+  background:linear-gradient(to top,rgba(3,5,10,.85),rgba(3,5,10,0));padding-top:40px}
+#picker{display:flex;gap:4px;overflow-x:auto;max-width:100%;pointer-events:auto;scrollbar-width:none;padding:2px}
+#picker::-webkit-scrollbar{display:none}
+.pick{flex:0 0 auto;display:flex;flex-direction:column;align-items:center;gap:4px;width:64px;padding:6px 2px 5px;border-radius:12px;background:transparent;border:1px solid transparent;cursor:pointer}
+.pick img{width:34px;height:34px;transition:transform .2s}
+.pick span{font-size:11.5px;color:#c3cbdc;white-space:nowrap}
+.pick:hover img{transform:scale(1.12)}
+.pick.on{background:rgba(255,255,255,.06);border-color:var(--line-strong)}
+.pick.on span{color:var(--sun)}
+.pick.all .allicon{width:34px;height:34px;display:grid;place-items:center}
+.pick.all svg{width:28px;height:28px;stroke:#c3cbdc;fill:none;stroke-width:1.2}
+#dock{pointer-events:auto;display:flex;align-items:center;gap:6px;padding:6px;border-radius:999px;background:var(--glass);border:1px solid var(--line);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);max-width:100%;overflow-x:auto;scrollbar-width:none}
+#dock::-webkit-scrollbar{display:none}
+.round{flex:0 0 auto;width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.06);border:1px solid var(--line);cursor:pointer}
+.round svg{width:15px;height:15px;fill:currentColor}
+.round.on{color:var(--sun);border-color:var(--sun)}
+#clock{flex:0 0 auto;font-family:var(--font-mono);font-size:12.5px;font-variant-numeric:tabular-nums;padding:0 8px;min-width:170px;text-align:center;line-height:1.25}
+#clock small{display:block;font-size:10.5px;color:var(--muted);font-family:var(--font-body)}
+.sep{width:1px;height:22px;background:var(--line);flex:0 0 auto}
+.chiplbl{font-size:11px;color:var(--muted);padding:0 2px 0 4px;flex:0 0 auto;white-space:nowrap}
+.spd{flex:0 0 auto;height:30px;padding:0 11px;border-radius:999px;background:transparent;border:1px solid transparent;cursor:pointer;font-size:12.5px;white-space:nowrap;color:#c8d0e0}
+.spd:hover{background:rgba(255,255,255,.06)}
+.spd.on{border-color:var(--sun);color:var(--sun)}
+.txtbtn{flex:0 0 auto;height:30px;padding:0 12px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid var(--line);cursor:pointer;font-size:12.5px;white-space:nowrap}
+
+/* 정보 카드 */
+#info,#bday{position:fixed;top:calc(72px + env(safe-area-inset-top,0px));right:calc(18px + env(safe-area-inset-right,0px));width:340px;max-height:calc(100% - 72px - 200px);overflow:auto;border-radius:16px;background:var(--glass-strong);border:1px solid var(--line);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  display:flex;flex-direction:column;gap:16px;padding:18px;animation:rise .35s ease}
+@keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.ihead{display:flex;gap:14px;align-items:center}
+.ihead img{width:68px;height:68px;flex:0 0 auto}
+.ihead>div{min-width:0}
+.kind{font-size:11px;letter-spacing:.08em;color:var(--muted)}
+#iName{font-family:var(--font-display);font-size:28px;font-weight:700;line-height:1.15;text-wrap:balance}
+#iAlt{font-size:12px;color:var(--muted)}
+#iClose{position:absolute;top:12px;right:12px;width:30px;height:30px}
+#iClose svg{width:12px;height:12px;stroke:currentColor;stroke-width:2;fill:none}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.tile{background:rgba(255,255,255,.035);border:1px solid var(--line);border-radius:12px;padding:10px 12px;min-width:0}
+.tile .k{font-size:11px;color:var(--muted)}
+.tile .v{font-family:var(--font-mono);font-size:15.5px;font-variant-numeric:tabular-nums;margin-top:2px;overflow-wrap:anywhere}
+.tile .s{font-size:11px;color:var(--sun);margin-top:1px}
+.cmp{display:flex;flex-direction:column;gap:8px}
+.cmp .row{display:flex;align-items:flex-end;justify-content:center;gap:22px;min-height:40px;padding:6px 0}
+.cmp figure{margin:0;display:flex;flex-direction:column;align-items:center;gap:5px}
+.cmp figure img{display:block}
+.cmp figcaption{font-size:11px;color:var(--muted)}
+.h3{font-size:11px;letter-spacing:.12em;color:var(--muted);margin:0;text-transform:uppercase}
+dl{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;margin:0;font-size:12.5px}
+dt{color:var(--muted)}
+dd{margin:0;font-family:var(--font-mono);font-variant-numeric:tabular-nums;text-align:right;min-width:0}
+.chips{display:flex;flex-wrap:wrap;gap:5px}
+.chip{font-size:12px;background:transparent;border:1px solid var(--line);border-radius:999px;padding:3px 10px;cursor:pointer}
+.chip:hover{border-color:var(--ice)}
+.chip.on{border-color:var(--sun);color:var(--sun)}
+#iNotes{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:9px;font-size:13px;line-height:1.65}
+#iNotes li{padding-left:14px;position:relative}
+#iNotes li::before{content:"";position:absolute;left:0;top:.62em;width:5px;height:5px;border-radius:50%;background:var(--sun)}
+.fallback{font-size:11px;color:var(--muted)}
+.sec{display:flex;flex-direction:column;gap:8px}
+.actions{display:flex;gap:6px;flex-wrap:wrap}
+
+/* 설정 서랍 */
+#settings{position:fixed;top:calc(72px + env(safe-area-inset-top,0px));left:calc(18px + env(safe-area-inset-left,0px));width:300px;max-height:calc(100% - 72px - 200px);overflow:auto;border-radius:16px;background:var(--glass-strong);border:1px solid var(--line);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);padding:18px;display:flex;flex-direction:column;gap:18px;animation:rise .25s ease}
+.seg{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:3px;border-radius:10px;background:rgba(255,255,255,.04);border:1px solid var(--line)}
+.seg button{height:32px;border-radius:8px;border:0;background:transparent;cursor:pointer;font-size:12.5px;color:#c3cbdc}
+.seg button.on{background:rgba(244,185,104,.16);color:var(--sun)}
+.slider{display:flex;flex-direction:column;gap:4px}
+.slider .t{display:flex;justify-content:space-between;font-size:12.5px}
+.slider output{font-family:var(--font-mono);color:var(--sun);font-variant-numeric:tabular-nums;font-size:12px}
+input[type=range]{width:100%;accent-color:var(--sun)}
+.check{display:flex;gap:9px;align-items:center;font-size:13px;cursor:pointer}
+.check input{accent-color:var(--sun);width:15px;height:15px}
+.hint{font-size:12px;color:var(--muted);line-height:1.6;margin:0}
+kbd{font-family:var(--font-mono);font-size:11px;border:1px solid var(--line-strong);border-radius:4px;padding:0 4px}
+
+#toast{position:fixed;left:50%;bottom:calc(150px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);padding:10px 16px;border-radius:999px;background:var(--glass);border:1px solid var(--line);backdrop-filter:blur(12px);font-size:13px;white-space:nowrap;transition:opacity .6s;pointer-events:none;max-width:calc(100% - 32px);overflow:hidden;text-overflow:ellipsis}
+#toast.gone{opacity:0}
+#loading{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;background:var(--void);z-index:20;color:var(--muted)}
+#loading .word{font-family:var(--font-display);font-size:30px;color:var(--fg);font-weight:700}
+#loading .bar{width:160px;height:2px;background:var(--line);border-radius:2px;overflow:hidden}
+#loading .bar i{display:block;height:100%;width:40%;background:var(--sun);animation:load 1.2s ease-in-out infinite}
+@keyframes load{from{transform:translateX(-100%)}to{transform:translateX(250%)}}
+
+/* 첫 화면 연출 */
+body.intro #bottom,body.intro #labels,body.intro #toast,body.intro #setBtn,body.intro #bdayBtn,body.intro #tourBtn,body.intro #histBtn,body.intro #voyBtn{opacity:0;pointer-events:none}
+/* 우주 주소 여행 */
+body.tour #bottom,body.tour #labels,body.tour #toast,body.tour #setBtn,body.tour #bdayBtn,body.tour #tourBtn,body.tour #histBtn,body.tour #voyBtn,body.tour #info,body.tour #bday,body.tour #settings{opacity:0;pointer-events:none}
+body.cosmic #labels{display:none}
+#cosLabels{position:fixed;inset:0;pointer-events:none;overflow:hidden}
+#cosLabels .cl{position:absolute;left:0;top:0;display:flex;align-items:center;gap:7px;font-size:12.5px;white-space:nowrap;text-shadow:0 0 6px #000,0 0 2px #000;will-change:transform;transition:opacity .4s}
+#cosLabels .cl i{width:9px;height:9px;border-radius:50%;border:1.5px solid var(--sun)}
+#cosLabels .cl.here span{color:var(--sun)}
+#fade{position:fixed;inset:0;background:#000;opacity:0;pointer-events:none;transition:opacity .6s;z-index:9}
+#fade.on{opacity:1}
+#tour{position:fixed;inset:0;z-index:8;pointer-events:none}
+#tourBox{position:absolute;left:50%;bottom:calc(9% + env(safe-area-inset-bottom,0px));transform:translateX(-50%);width:min(680px,calc(100% - 32px));display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center}
+#tourBox::before{content:"";position:absolute;inset:-50px -40px -30px;z-index:-1;background:radial-gradient(closest-side,rgba(3,5,10,.7),rgba(3,5,10,0))}
+#addrTrail{display:flex;flex-wrap:wrap;justify-content:center;gap:4px 8px;font-size:12.5px;color:var(--muted)}
+#addrTrail span::after{content:" ›";opacity:.6}
+#addrTrail span:last-child::after{content:""}
+#addrNow,#addrCap,#intro .line,#introEnd .word{word-break:keep-all;overflow-wrap:anywhere}
+#addrNow{font-family:var(--font-display);font-size:40px;font-weight:700;line-height:1.15;text-wrap:balance;text-shadow:0 0 24px rgba(0,0,0,.8)}
+#addrCap{font-size:14px;line-height:1.6;color:#d6dcea;max-width:560px;text-wrap:balance}
+#addrNow,#addrCap{transition:opacity .5s}
+#addrNow.dim,#addrCap.dim{opacity:0}
+#tourEnd{display:flex;flex-direction:column;align-items:center;gap:10px;pointer-events:auto;margin-top:6px}
+#tourEnd .primary,#tourEnd .ghost{width:min(340px,100%)}
+#tourSkip{position:absolute;right:calc(18px + env(safe-area-inset-right,0px));bottom:calc(22px + env(safe-area-inset-bottom,0px));pointer-events:auto}
+.linkbtn{background:none;border:0;color:var(--ice);font-size:13.5px;cursor:pointer;padding:6px 8px;text-decoration:underline;text-underline-offset:3px}
+#bottom,#labels,#setBtn,#bdayBtn{transition:opacity .9s}
+#intro{position:fixed;inset:0;z-index:8;pointer-events:none;background:radial-gradient(ellipse at center,rgba(3,5,10,0) 45%,rgba(3,5,10,.55) 100%)}
+#intro .line{position:absolute;left:50%;bottom:20%;transform:translate(-50%,8px);width:min(760px,calc(100% - 32px));text-align:center;margin:0;
+  font-family:var(--font-display);font-size:27px;line-height:1.45;text-wrap:balance;text-shadow:0 0 18px #000,0 0 4px #000;opacity:0;transition:opacity 1s,transform 1s}
+#intro .line.show{opacity:1;transform:translate(-50%,0)}
+/* 끝 화면: 태양을 가리지 않게 아래 가운데, 엄지로 누르기 쉬운 자리 */
+#introEnd{position:absolute;left:50%;top:auto;bottom:calc(9% + env(safe-area-inset-bottom,0px));transform:translateX(-50%);width:min(560px,calc(100% - 32px));display:flex;flex-direction:column;align-items:center;gap:18px;text-align:center;pointer-events:auto;animation:endRise 1.2s ease}
+@keyframes endRise{from{opacity:0;transform:translate(-50%,14px)}to{opacity:1;transform:translate(-50%,0)}}
+#introEnd .actions .primary,#introEnd .actions .ghost{width:min(340px,100%)}
+#introEnd .word{font-family:var(--font-display);font-size:58px;font-weight:700;line-height:1.1;text-shadow:0 0 30px rgba(0,0,0,.8)}
+#introEnd .actions{flex-direction:column;align-items:center;gap:10px}
+.primary{height:46px;padding:0 26px;border-radius:999px;background:var(--sun);color:#1b1206;border:0;font-size:15px;font-weight:600;cursor:pointer}
+.primary:hover{filter:brightness(1.08)}
+.ghost{height:42px;padding:0 20px;border-radius:999px;background:rgba(10,14,24,.6);border:1px solid var(--line-strong);font-size:14px;cursor:pointer;backdrop-filter:blur(8px)}
+.ghost:hover{border-color:var(--sun);color:var(--sun)}
+#skipBtn{position:absolute;right:calc(18px + env(safe-area-inset-right,0px));bottom:calc(22px + env(safe-area-inset-bottom,0px));pointer-events:auto}
+/* 내 생일 카드 */
+#bdayForm{display:flex;flex-direction:column;gap:8px}
+#bdayForm .row{display:flex;gap:8px;flex-wrap:wrap}
+#bdayDate{flex:1 1 150px;height:38px;border-radius:10px;border:1px solid var(--line-strong);background:rgba(255,255,255,.05);color:var(--fg);font:inherit;padding:0 10px;color-scheme:dark}
+#bdayForm .primary{height:38px;font-size:13.5px;padding:0 16px}
+.err{color:#ff9d8a}
+.ages{display:flex;flex-direction:column;gap:2px}
+.age{display:grid;grid-template-columns:24px 1fr auto;gap:10px;align-items:center;padding:7px 4px;border-bottom:1px solid var(--line)}
+.age img{width:24px;height:24px}
+.age .n{font-size:13px}
+.age .n small{display:block;font-size:11px;color:var(--muted)}
+.age .v{font-family:var(--font-mono);font-size:15px;color:var(--sun);font-variant-numeric:tabular-nums;text-align:right}
+#traveled{margin:0;font-size:13px;line-height:1.6}
+@media (prefers-reduced-motion:reduce){#intro .line{transition:none}#introEnd{animation:none}}
+
+.grab{display:none}
+#spdCycle{display:none}
+#introEnd::before{content:"";position:absolute;inset:-50px -40px -30px;z-index:-1;background:radial-gradient(closest-side,rgba(3,5,10,.72),rgba(3,5,10,0));pointer-events:none}
+
+@media (max-width:760px){
+  #addrNow{font-size:30px}
+  #addrCap{font-size:13px}
+  #brand .word{font-size:21px}
+  .iconbtn .lbltxt{display:none}
+  #intro .line{font-size:20px;bottom:24%}
+  #introEnd .word{font-size:40px}
+  /* 휴대폰: 카드는 아래에서 올라오는 시트, 손잡이로 펼치고 접는다 */
+  #info,#bday{left:0;right:0;width:auto;top:auto;bottom:calc(66px + env(safe-area-inset-bottom,0px));max-height:min(46%,420px);border-radius:18px 18px 0 0;
+    padding:6px max(16px,env(safe-area-inset-right,0px)) 16px max(16px,env(safe-area-inset-left,0px));gap:14px;transition:max-height .3s ease;border-bottom:0}
+  #info.expanded,#bday.expanded{max-height:calc(100% - 140px - env(safe-area-inset-top,0px))}
+  .grab{display:flex;justify-content:center;align-items:center;height:22px;flex:0 0 auto;width:100%;background:none;border:0;cursor:pointer;margin-bottom:-6px}
+  .grab i{width:38px;height:4px;border-radius:2px;background:var(--line-strong)}
+  #iClose{top:14px}
+  .ihead img{width:52px;height:52px}
+  #iName{font-size:24px}
+  .tile{padding:8px 10px}
+  .tile .v{font-size:14px}
+  body.sheet #picker{display:none}
+  body.sheet #bottom{padding-top:8px;background:none}
+  #presets,.chiplbl,#dock .sep{display:none!important}
+  #spdCycle{display:inline-flex;align-items:center}
+  #dock{gap:4px;padding:5px}
+  #clock{min-width:0;font-size:11.5px;padding:0 4px}
+  .round{width:40px;height:40px}
+  #bdayDate{font-size:16px}
+  #langSel{font-size:16px}
+  .iconbtn{height:38px;padding:0 11px}
+  #settings{left:12px;right:12px;width:auto;top:calc(64px + env(safe-area-inset-top,0px));max-height:calc(100% - 64px - 170px);z-index:5}
+  #picker{justify-content:flex-start}
+  .pick{width:56px}
+  #dock{justify-content:flex-start}
+  #clock{min-width:150px}
+  #toast{bottom:calc(160px + env(safe-area-inset-bottom,0px))}
+}
+@media (max-height:520px) and (min-width:560px){
+  #picker{display:none}
+  #bottom{padding-top:8px}
+  #info,#bday,#settings{top:calc(58px + env(safe-area-inset-top,0px));bottom:auto;max-height:calc(100% - 58px - 76px - env(safe-area-inset-top,0px));width:300px;left:auto;right:calc(12px + env(safe-area-inset-right,0px));border-radius:16px}
+  #settings{left:calc(12px + env(safe-area-inset-left,0px));right:auto}
+  #introEnd .word{font-size:34px}
+  #introEnd{gap:12px}
+  #intro .line{font-size:18px;bottom:16%}
+  #toast{bottom:calc(80px + env(safe-area-inset-bottom,0px))}
+}
+@media (prefers-reduced-motion:reduce){#info,#settings{animation:none}.pick img{transition:none}#loading .bar i{animation:none}}
+</style>
+
+<canvas id="scene"></canvas>
+<div id="labels"></div>
+
+<div id="top">
+  <button id="brand" type="button"><div class="word" data-i="title"></div><div class="sub" data-i="sub"></div></button>
+  <div class="topbtns">
+    <button class="iconbtn" id="histBtn" type="button">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="9" ry="3.5"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="9.5" r="1.1"/></svg>
+      <span class="lbltxt" id="histLbl"></span>
+    </button>
+    <button class="iconbtn" id="voyBtn" type="button">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8a8 8 0 0 0 12 12z"/><path d="M10 14l8.5-8.5"/><circle cx="19.5" cy="4.5" r="1.4"/></svg>
+      <span class="lbltxt" id="voyLbl"></span>
+    </button>
+    <button class="iconbtn" id="tourBtn" type="button">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="2"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="10"/></svg>
+      <span class="lbltxt" data-i="tourBtn"></span>
+    </button>
+    <button class="iconbtn" id="bdayBtn" type="button">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h16M5 20v-7h14v7M5 16c2 1.5 4.7 1.5 7 0s5-1.5 7 0M12 13V9M12 6.5c-.9-.8-.9-2 0-3 .9 1 .9 2.2 0 3z"/></svg>
+      <span class="lbltxt" data-i="bdayBtn"></span>
+    </button>
+    <button class="iconbtn" id="setBtn" type="button" aria-expanded="false">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>
+      <span class="lbltxt" data-i="settings"></span>
+    </button>
+  </div>
+</div>
+
+<aside id="settings" hidden>
+  <div class="sec">
+    <h3 class="h3"><label for="langSel">언어 · Language</label></h3>
+    <div class="langwrap"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z"/></svg>
+      <select id="langSel" aria-label="Language">
+        <option value="ko">한국어</option><option value="en">English</option><option value="ja">日本語</option><option value="zh">中文</option><option value="es">Español</option><option value="fr">Français</option>
+      </select></div>
+  </div>
+  <div class="sec">
+    <h3 class="h3" data-i="scale"></h3>
+    <div class="seg"><button type="button" id="modeC" class="on" data-i="compressed"></button><button type="button" id="modeR" data-i="real"></button></div>
+    <div class="slider"><div class="t"><label for="size" data-i="sizeMul"></label><output id="sizeOut"></output></div><input type="range" id="size" min="0" max="100" value="52"></div>
+    <p class="hint" id="modeHint"></p>
+  </div>
+  <div class="sec">
+    <h3 class="h3" data-i="motion"></h3>
+    <div class="slider"><div class="t"><label for="speed" data-i="timeFlow"></label><output id="speedOut"></output></div><input type="range" id="speed" min="0" max="1000" value="476"></div>
+    <div class="slider"><div class="t"><label for="orbitMul" data-i="orbitMul"></label><output id="orbitOut"></output></div><input type="range" id="orbitMul" min="0" max="200" value="100"></div>
+    <div class="slider"><div class="t"><label for="rotMul" data-i="rotMul"></label><output id="rotOut"></output></div><input type="range" id="rotMul" min="0" max="200" value="100"></div>
+    <p class="hint" data-i="mulHint"></p>
+  </div>
+  <div class="sec">
+    <h3 class="h3" data-i="view"></h3>
+    <label class="check"><input type="checkbox" id="optOrbits" checked><span data-i="orbits"></span></label>
+    <label class="check"><input type="checkbox" id="optLabels" checked><span data-i="labels"></span></label>
+    <label class="check"><input type="checkbox" id="optMoons" checked><span data-i="moons"></span></label>
+    <label class="check"><input type="checkbox" id="optBelts" checked><span data-i="belts"></span></label>
+  </div>
+  <div class="sec">
+    <h3 class="h3" data-i="howto"></h3>
+    <p class="hint" data-i="help"></p>
+    <p class="hint" data-i="keys"></p>
+  </div>
+</aside>
+
+<aside id="info" hidden aria-live="polite">
+  <button class="grab" type="button" aria-label="펼치기"><i></i></button>
+  <button class="round" id="iClose" type="button"><svg viewBox="0 0 12 12"><path d="M1 1l10 10M11 1L1 11"/></svg></button>
+  <div class="ihead"><img id="iThumb" alt=""><div><div class="kind" id="iKind"></div><div id="iName"></div><div id="iAlt"></div></div></div>
+  <div class="tiles" id="iTiles"></div>
+  <div class="cmp" id="iCmp"><h3 class="h3" id="iCmpT"></h3><div class="row" id="iCmpRow"></div></div>
+  <dl id="iStats"></dl>
+  <div class="sec" id="iMoonsWrap"><h3 class="h3" id="iMoonsT"></h3><div class="chips" id="iMoons"></div></div>
+  <div class="sec"><h3 class="h3" data-i="latest"></h3><ul id="iNotes"></ul><div class="fallback" id="iFallback" hidden data-i="fallback"></div></div>
+  <div class="actions"><button class="txtbtn" id="parentBtn" type="button" hidden></button><button class="txtbtn" id="overviewBtn" type="button" data-i="overview"></button></div>
+</aside>
+
+<aside id="bday" hidden aria-live="polite">
+  <button class="grab" type="button" aria-label="펼치기"><i></i></button>
+  <button class="round" id="bClose" type="button" style="position:absolute;top:12px;right:12px;width:30px;height:30px"><svg viewBox="0 0 12 12" style="width:12px;height:12px;stroke:currentColor;stroke-width:2;fill:none"><path d="M1 1l10 10M11 1L1 11"/></svg></button>
+  <div><div class="kind" data-i="bdayKind"></div><div id="bName" style="font-family:var(--font-display);font-size:26px;font-weight:700" data-i="bdayTitle"></div></div>
+  <form id="bdayForm" novalidate>
+    <label for="bdayDate" class="h3" data-i="bdayLabel"></label>
+    <div class="row"><input type="date" id="bdayDate" min="1900-01-01"><button type="submit" class="primary" data-i="bdayGo"></button></div>
+    <p class="hint err" id="bdayErr" hidden data-i="invalid"></p>
+  </form>
+  <div id="bdayResult" class="sec" hidden>
+    <p class="hint" id="bdayHint"></p>
+    <h3 class="h3" data-i="bdayAges"></h3>
+    <div class="ages" id="ages"></div>
+    <p id="traveled"></p>
+    <div class="actions"><button class="txtbtn" id="replayBtn" type="button" data-i="replay"></button></div>
+  </div>
+</aside>
+
+<div id="intro" hidden>
+  <p class="line" id="introLine"></p>
+  <div id="introEnd" hidden>
+    <div class="word" data-i="title"></div>
+    <div class="actions"><button class="primary" id="startBtn" type="button" data-i="start"></button><button class="ghost" id="introBday" type="button" data-i="bdayAsk"></button><button class="linkbtn" id="introTour" type="button" data-i="tourLink"></button><button class="linkbtn" id="introHist" type="button"></button><button class="linkbtn" id="introVoy" type="button"></button></div>
+  </div>
+  <button class="ghost" id="skipBtn" type="button" data-i="skip"></button>
+</div>
+
+<div id="bottom">
+  <nav id="picker"></nav>
+  <div id="dock">
+    <button class="round" id="playBtn" type="button"></button>
+    <button class="round" id="revBtn" type="button"><svg viewBox="0 0 16 16"><path d="M8 3v10L1 8zM15 3v10L8 8z"/></svg></button>
+    <div id="clock"></div>
+    <button class="txtbtn" id="nowBtn" type="button" data-i="now"></button>
+    <span class="sep"></span>
+    <span class="chiplbl" data-i="perSec"></span>
+    <div id="presets" style="display:flex;gap:2px"></div>
+    <button class="spd on" id="spdCycle" type="button"></button>
+  </div>
+</div>
+<div id="toast" data-i="toast"></div>
+<div id="cosLabels" hidden></div>
+<div id="tour" hidden>
+  <div id="tourBox">
+    <div id="addrTrail"></div>
+    <div id="addrNow"></div>
+    <div id="addrCap"></div>
+    <div id="tourEnd" hidden><button class="primary" id="tourBack" type="button" data-i="backSolar"></button><button class="ghost" id="tourAgain" type="button" data-i="replayTour"></button><button class="ghost" id="tourBday" type="button" data-i="bdayAsk" hidden></button></div>
+  </div>
+  <button class="ghost" id="tourSkip" type="button" data-i="skip"></button>
+</div>
+<div id="fade"></div>
+<div id="loading"><div class="word" data-i="title">우리의 우주</div><div class="bar"><i></i></div><div id="loadStep" data-i="loading"></div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/OrbitControls.js"></script>
+<script src="history-data.js?v=32"></script>
+<script src="history-i18n.js?v=32"></script>
+<script>
+(function(){
+'use strict';
+const DEG = Math.PI/180, TAU = Math.PI*2;
+// 휴대폰·태블릿(손가락 조작) 또는 좁은 화면이면 그림 크기·별 수를 줄여 가볍게
+const MOBILE = matchMedia('(pointer:coarse)').matches || Math.min(innerWidth,innerHeight)<600;
+const TQ = MOBILE? 0.5 : 1; // 표면 그림 해상도 배율
+const J2000 = Date.UTC(2000,0,1,12,0,0);
+const OBL = 23.4392911*DEG;
+
+/* ═════════ 언어 ═════════ */
+const LANGS=['ko','en','ja','zh','es','fr'];
+const LOCALE={ko:'ko-KR',en:'en-US',ja:'ja-JP',zh:'zh-CN',es:'es-ES',fr:'fr-FR'};
+const UI={
+ ko:{title:'우리의 우주',sub:'태양계',settings:'설정',loading:'행성 표면을 그리는 중…',scale:'거리와 크기',compressed:'보기 좋게 압축',real:'실제 비율',sizeMul:'천체 크기 배율',
+  modeHintC:'한 화면에 담기 위해 거리는 제곱근으로, 크기도 줄였다. 고리와 가까운 위성은 실제 비율 그대로 두었다.',
+  modeHintR:'거리와 크기가 실제 비율이다(1칸 = 100만 km). 1배에서는 행성이 점보다 작으니 이름표로 찾는다. 크기를 키우면 위성 궤도도 같이 커지고, 태양은 30배까지만 커진다.',
+  motion:'움직임',timeFlow:'시간 흐름',orbitMul:'공전 속도 배율',rotMul:'자전 속도 배율',mulHint:'둘 다 1배면 실제 비율대로 돈다. 맨 왼쪽은 멈춤.',
+  view:'보기',orbits:'궤도선',labels:'이름표',moons:'위성',belts:'소행성대 · 트로이군 · 카이퍼대',howto:'조작법',
+  help:'끌어서 돌려 보고, 휠이나 두 손가락으로 확대한다. 오른쪽 끌기(두 손가락 끌기)로 옮긴다. 천체를 누르면 가까이 가서 따라간다.',
+  keys:'<kbd>Space</kbd> 멈춤·재생 · <kbd>0</kbd>~<kbd>9</kbd> 태양~명왕성 · <kbd>Esc</kbd> 전체 보기',
+  latest:'알아 두면 좋은 것',fallback:'',overview:'태양계 전체 보기',toParent:'{p}(으)로',moonsOf:'{p}의 위성',now:'지금',perSec:'1초에',
+  presets:['실시간','1시간','1일','1달','1년'],pause:'멈춤',play:'재생',reverse:'시간 거꾸로',
+  diameter:'지름',gravity:'표면 중력',day:'자전 주기',year:'공전 주기(1년)',temp:'평균 온도',surfTemp:'표면 온도',xEarth:'지구의 {n}배',xMoon:'달의 {n}배',
+  orbitP:'공전 주기',distParent:'모행성과 거리',cmpEarth:'지구와 크기 비교',cmpMoon:'달과 크기 비교',
+  meanDist:'태양과 평균 거리',nowDist:'지금 거리',ecc:'궤도 이심률',tilt:'자전축 기울기',known:'확인된 위성',shown:'표시 {n}개',count:'{n}개',
+  inc:'궤도 기울기',eqRef:'모행성 적도 기준',eclRef:'황도 기준',xRadius:'모행성 반지름의 {n}배',
+  retro:'역행',h:'시간',d:'일',y:'년',smallMoon:'작은 위성은 실제로 감자처럼 울퉁불퉁하다. 궤도 위 위치는 대표값으로 놓았다.',
+  dateNote:'배율 적용 중 · 날짜는 공전 기준',toast:'행성을 눌러 가까이 가 보세요 · 끌어서 돌려 보세요',all:'전체',
+  units:['초','분','시간','일','달','년'],speedFmt:(n,u)=>'1초에 '+n+u,mstop:'멈춤',mx:'{n}배',km:'km',mkm:'백만 km',
+  kinds:{star:'항성 · G2V 주계열성',rocky:'행성 · 암석형',gas:'행성 · 거대 가스 행성',ice:'행성 · 거대 얼음 행성',dwarf:'왜행성 · 카이퍼대 천체',moonOf:'{p}의 위성'},bc:'기원전 ',
+  intro:['지금 이 순간,','당신은 초속 약 30 km로 태양 둘레를 돌고 있습니다.','그 태양도 초속 약 230 km로 우리은하를 돌고 있습니다.','여기는, 우리의 우주입니다.'],
+  start:'탐험 시작',bdayAsk:'내 생일엔 행성이 어디 있었을까?',skip:'건너뛰기',bdayBtn:'내 생일',bdayKind:'생일 여행',bdayTitle:'내 생일의 하늘',bdayLabel:'생일',bdayGo:'그날로 가기',
+  bdayAges:'행성마다 다른 내 나이',age:'{n}살',next:'다음 생일 {d}',traveled:'태어난 뒤 지구와 함께 태양 둘레를 {n} 달렸습니다.',replay:'그날부터 오늘까지 돌려 보기',
+  bdayHint:'{d} 정오(협정 세계시)의 행성 위치로 옮겼어요. 화면은 멈춰 있어요.',invalid:'1900년 이후, 오늘 이전 날짜를 넣어 주세요.',close:'닫기',
+  bigKm:km=>(km/1e8).toLocaleString('ko-KR',{maximumFractionDigits:1})+'억 km'},
+ en:{title:'Our Universe',sub:'The Solar System',settings:'Settings',loading:'Painting planet surfaces…',scale:'Distance & size',compressed:'Compressed',real:'True scale',sizeMul:'Body size',
+  modeHintC:'Distances are square-rooted and sizes reduced so everything fits on one screen. Rings and close moons keep their true proportions.',
+  modeHintR:'Distances and sizes are to scale (1 unit = 1 million km). At 1× planets are smaller than a pixel, so use the labels. Enlarging bodies also enlarges moon orbits; the Sun stops at 30×.',
+  motion:'Motion',timeFlow:'Time flow',orbitMul:'Orbit speed',rotMul:'Spin speed',mulHint:'At 1× both follow real ratios. Far left stops them.',
+  view:'Show',orbits:'Orbits',labels:'Labels',moons:'Moons',belts:'Asteroid belt · Trojans · Kuiper belt',howto:'Controls',
+  help:'Drag to rotate, scroll or pinch to zoom, right-drag or two-finger drag to pan. Tap a body to fly to it and follow it.',
+  keys:'<kbd>Space</kbd> pause/play · <kbd>0</kbd>–<kbd>9</kbd> Sun to Pluto · <kbd>Esc</kbd> overview',
+  latest:'Good to know',fallback:'',overview:'Whole Solar System',toParent:'Back to {p}',moonsOf:'Moons of {p}',now:'Now',perSec:'Per second',
+  presets:['Real time','1 hour','1 day','1 month','1 year'],pause:'Pause',play:'Play',reverse:'Reverse time',
+  diameter:'Diameter',gravity:'Surface gravity',day:'Rotation',year:'Orbit (1 year)',temp:'Mean temp.',surfTemp:'Surface temp.',xEarth:'{n}× Earth',xMoon:'{n}× the Moon',
+  orbitP:'Orbital period',distParent:'Distance from planet',cmpEarth:'Size vs. Earth',cmpMoon:'Size vs. the Moon',
+  meanDist:'Mean distance from Sun',nowDist:'Distance now',ecc:'Eccentricity',tilt:'Axial tilt',known:'Known moons',shown:'{n} shown',count:'{n}',
+  inc:'Inclination',eqRef:'to planet\'s equator',eclRef:'to ecliptic',xRadius:'{n}× planet radius',
+  retro:'retrograde',h:' h',d:' days',y:' years',smallMoon:'Small moons are really lumpy, potato-shaped bodies. Their position along the orbit is a representative value.',
+  dateNote:'Multipliers on · date follows orbits',toast:'Tap a planet to fly there · drag to look around',all:'All',
+  units:[' s',' min',' h',' days',' months',' years'],speedFmt:(n,u)=>n+u+' / sec',mstop:'Stopped',mx:'{n}×',km:'km',mkm:'million km',
+  kinds:{star:'Star · G2V main sequence',rocky:'Planet · rocky',gas:'Planet · gas giant',ice:'Planet · ice giant',dwarf:'Dwarf planet · Kuiper belt object',moonOf:'Moon of {p}'},bc:'',
+  intro:['Right now,','you are circling the Sun at about 30 km per second.','And the Sun is circling our galaxy at about 230 km per second.','This is our universe.'],
+  start:'Start exploring',bdayAsk:'Where were the planets on my birthday?',skip:'Skip',bdayBtn:'Birthday',bdayKind:'Birthday trip',bdayTitle:'The sky on my birthday',bdayLabel:'Date of birth',bdayGo:'Go to that day',
+  bdayAges:'My age on each planet',age:'{n} yrs',next:'Next: {d}',traveled:'Since you were born, you have travelled {n} around the Sun with Earth.',replay:'Play from that day to today',
+  bdayHint:'Planets are shown as they were at noon (UTC) on {d}. Time is paused.',invalid:'Enter a date after 1900 and before today.',close:'Close',
+  bigKm:km=>(km/1e9).toLocaleString('en-US',{maximumFractionDigits:1})+' billion km'},
+ ja:{title:'私たちの宇宙',sub:'太陽系',settings:'設定',loading:'惑星の表面を描いています…',scale:'距離と大きさ',compressed:'見やすく圧縮',real:'実際の比率',sizeMul:'天体の大きさ',
+  modeHintC:'一画面に収めるため、距離は平方根で縮め、大きさも小さくしています。環と近い衛星は実際の比率のままです。',
+  modeHintR:'距離と大きさは実際の比率です（1目盛り＝100万km）。1倍では惑星が点より小さいので、名札で探してください。拡大すると衛星の軌道も同じ比率で大きくなり、太陽は30倍までです。',
+  motion:'動き',timeFlow:'時間の流れ',orbitMul:'公転の速さ',rotMul:'自転の速さ',mulHint:'どちらも1倍なら実際の比率で回ります。左端は停止。',
+  view:'表示',orbits:'軌道',labels:'名札',moons:'衛星',belts:'小惑星帯・トロヤ群・カイパーベルト',howto:'操作方法',
+  help:'ドラッグで回転、ホイールやピンチで拡大、右ドラッグ（2本指ドラッグ）で移動。天体を押すと近づいて追いかけます。',
+  keys:'<kbd>Space</kbd> 停止・再生 · <kbd>0</kbd>〜<kbd>9</kbd> 太陽〜冥王星 · <kbd>Esc</kbd> 全体表示',
+  latest:'知っておきたいこと',fallback:'※ 解説は英語で表示しています',overview:'太陽系全体を見る',toParent:'{p}へ戻る',moonsOf:'{p}の衛星',now:'現在',perSec:'1秒で',
+  presets:['実時間','1時間','1日','1か月','1年'],pause:'停止',play:'再生',reverse:'時間を逆に',
+  diameter:'直径',gravity:'表面重力',day:'自転周期',year:'公転周期（1年）',temp:'平均気温',surfTemp:'表面温度',xEarth:'地球の{n}倍',xMoon:'月の{n}倍',
+  orbitP:'公転周期',distParent:'惑星からの距離',cmpEarth:'地球との大きさ比較',cmpMoon:'月との大きさ比較',
+  meanDist:'太陽からの平均距離',nowDist:'現在の距離',ecc:'軌道離心率',tilt:'自転軸の傾き',known:'確認された衛星',shown:'{n}個を表示',count:'{n}個',
+  inc:'軌道傾斜角',eqRef:'惑星の赤道基準',eclRef:'黄道基準',xRadius:'惑星半径の{n}倍',
+  retro:'逆行',h:'時間',d:'日',y:'年',smallMoon:'小さな衛星は実際にはジャガイモのようにでこぼこです。軌道上の位置は代表値です。',
+  dateNote:'倍率適用中・日付は公転基準',toast:'惑星を押して近づいてみよう・ドラッグで見回そう',all:'全体',
+  units:['秒','分','時間','日','か月','年'],speedFmt:(n,u)=>'1秒で'+n+u,mstop:'停止',mx:'{n}倍',km:'km',mkm:'百万km',
+  kinds:{star:'恒星・G2V主系列星',rocky:'惑星・岩石惑星',gas:'惑星・巨大ガス惑星',ice:'惑星・巨大氷惑星',dwarf:'準惑星・カイパーベルト天体',moonOf:'{p}の衛星'},bc:'紀元前',
+  intro:['今この瞬間、','あなたは秒速約30kmで太陽のまわりを回っています。','その太陽も秒速約230kmで天の川銀河を回っています。','ここが、私たちの宇宙です。'],
+  start:'探検をはじめる',bdayAsk:'私の誕生日、惑星はどこにいた？',skip:'スキップ',bdayBtn:'誕生日',bdayKind:'誕生日の旅',bdayTitle:'誕生日の空',bdayLabel:'生年月日',bdayGo:'その日へ行く',
+  bdayAges:'惑星ごとの私の年齢',age:'{n}歳',next:'次の誕生日 {d}',traveled:'あなたは生まれてから、地球とともに太陽のまわりを{n}進みました。',replay:'その日から今日まで再生',
+  bdayHint:'{d}の正午（UTC）の惑星の位置です。時間は止まっています。',invalid:'1900年以降、今日より前の日付を入れてください。',close:'閉じる',
+  bigKm:km=>(km/1e8).toLocaleString('ja-JP',{maximumFractionDigits:1})+'億km'},
+ zh:{title:'我们的宇宙',sub:'太阳系',settings:'设置',loading:'正在绘制行星表面…',scale:'距离与大小',compressed:'压缩显示',real:'真实比例',sizeMul:'天体大小',
+  modeHintC:'为了在一屏内显示，距离按平方根压缩，大小也缩小了。行星环和近距离卫星保持真实比例。',
+  modeHintR:'距离和大小均为真实比例（1格＝100万公里）。1倍时行星比一个像素还小，请用名称标签查找。放大天体时卫星轨道同比放大，太阳最多放大30倍。',
+  motion:'运动',timeFlow:'时间流速',orbitMul:'公转速度',rotMul:'自转速度',mulHint:'两者都为1倍时按真实比例运行。最左端为停止。',
+  view:'显示',orbits:'轨道',labels:'名称',moons:'卫星',belts:'小行星带 · 特洛伊群 · 柯伊伯带',howto:'操作方法',
+  help:'拖动旋转，滚轮或双指缩放，右键拖动（双指拖动）平移。点击天体即可飞近并跟随。',
+  keys:'<kbd>Space</kbd> 暂停/播放 · <kbd>0</kbd>–<kbd>9</kbd> 太阳至冥王星 · <kbd>Esc</kbd> 全景',
+  latest:'值得了解',fallback:'※ 说明以英文显示',overview:'查看整个太阳系',toParent:'返回{p}',moonsOf:'{p}的卫星',now:'现在',perSec:'每秒',
+  presets:['实时','1小时','1天','1个月','1年'],pause:'暂停',play:'播放',reverse:'时间倒流',
+  diameter:'直径',gravity:'表面重力',day:'自转周期',year:'公转周期（1年）',temp:'平均温度',surfTemp:'表面温度',xEarth:'地球的{n}倍',xMoon:'月球的{n}倍',
+  orbitP:'公转周期',distParent:'与行星距离',cmpEarth:'与地球大小比较',cmpMoon:'与月球大小比较',
+  meanDist:'与太阳平均距离',nowDist:'当前距离',ecc:'轨道偏心率',tilt:'自转轴倾角',known:'已确认卫星',shown:'显示{n}颗',count:'{n}颗',
+  inc:'轨道倾角',eqRef:'相对行星赤道',eclRef:'相对黄道',xRadius:'行星半径的{n}倍',
+  retro:'逆行',h:'小时',d:'天',y:'年',smallMoon:'小卫星实际上形状不规则，像土豆一样。轨道上的位置为代表值。',
+  dateNote:'已调整倍率 · 日期以公转为准',toast:'点击行星飞过去看看 · 拖动四处观察',all:'全部',
+  units:['秒','分钟','小时','天','个月','年'],speedFmt:(n,u)=>'每秒'+n+u,mstop:'停止',mx:'{n}倍',km:'公里',mkm:'百万公里',
+  kinds:{star:'恒星 · G2V主序星',rocky:'行星 · 岩质行星',gas:'行星 · 气态巨行星',ice:'行星 · 冰巨星',dwarf:'矮行星 · 柯伊伯带天体',moonOf:'{p}的卫星'},bc:'公元前',
+  intro:['此时此刻，','你正以每秒约30公里的速度绕太阳运行。','而太阳也以每秒约230公里的速度绕银河系运行。','这里，就是我们的宇宙。'],
+  start:'开始探索',bdayAsk:'我出生那天行星在哪里？',skip:'跳过',bdayBtn:'生日',bdayKind:'生日之旅',bdayTitle:'我生日的天空',bdayLabel:'出生日期',bdayGo:'前往那一天',
+  bdayAges:'我在各行星上的年龄',age:'{n}岁',next:'下次生日 {d}',traveled:'你出生以来，已随地球绕太阳行进了{n}。',replay:'从那天播放到今天',
+  bdayHint:'显示的是{d}正午（UTC）的行星位置。时间已暂停。',invalid:'请输入1900年以后、今天以前的日期。',close:'关闭',
+  bigKm:km=>(km/1e8).toLocaleString('zh-CN',{maximumFractionDigits:1})+'亿公里'},
+ es:{title:'Nuestro universo',sub:'El sistema solar',settings:'Ajustes',loading:'Pintando las superficies…',scale:'Distancia y tamaño',compressed:'Comprimido',real:'Escala real',sizeMul:'Tamaño de los cuerpos',
+  modeHintC:'Las distancias se reducen con raíz cuadrada y los tamaños se achican para que todo quepa en una pantalla. Los anillos y las lunas cercanas conservan su proporción real.',
+  modeHintR:'Distancias y tamaños a escala real (1 unidad = 1 millón de km). A 1× los planetas son más pequeños que un píxel; búsquelos por su etiqueta. Al agrandar, las órbitas de las lunas crecen igual; el Sol llega solo a 30×.',
+  motion:'Movimiento',timeFlow:'Paso del tiempo',orbitMul:'Velocidad orbital',rotMul:'Velocidad de rotación',mulHint:'A 1× ambas siguen la proporción real. Al extremo izquierdo se detienen.',
+  view:'Mostrar',orbits:'Órbitas',labels:'Etiquetas',moons:'Lunas',belts:'Cinturón de asteroides · troyanos · cinturón de Kuiper',howto:'Controles',
+  help:'Arrastre para girar, rueda o pellizco para acercar, arrastre derecho o con dos dedos para mover. Toque un cuerpo para volar hasta él y seguirlo.',
+  keys:'<kbd>Espacio</kbd> pausa · <kbd>0</kbd>–<kbd>9</kbd> Sol a Plutón · <kbd>Esc</kbd> vista general',
+  latest:'Para saber',fallback:'※ Las notas se muestran en inglés',overview:'Ver todo el sistema solar',toParent:'Volver a {p}',moonsOf:'Lunas de {p}',now:'Ahora',perSec:'Por segundo',
+  presets:['Tiempo real','1 hora','1 día','1 mes','1 año'],pause:'Pausa',play:'Reproducir',reverse:'Invertir el tiempo',
+  diameter:'Diámetro',gravity:'Gravedad superficial',day:'Rotación',year:'Órbita (1 año)',temp:'Temp. media',surfTemp:'Temp. superficial',xEarth:'{n}× la Tierra',xMoon:'{n}× la Luna',
+  orbitP:'Periodo orbital',distParent:'Distancia al planeta',cmpEarth:'Tamaño frente a la Tierra',cmpMoon:'Tamaño frente a la Luna',
+  meanDist:'Distancia media al Sol',nowDist:'Distancia actual',ecc:'Excentricidad',tilt:'Inclinación del eje',known:'Lunas conocidas',shown:'{n} visibles',count:'{n}',
+  inc:'Inclinación',eqRef:'respecto al ecuador',eclRef:'respecto a la eclíptica',xRadius:'{n}× el radio del planeta',
+  retro:'retrógrado',h:' h',d:' días',y:' años',smallMoon:'Las lunas pequeñas son en realidad irregulares, como patatas. Su posición en la órbita es un valor representativo.',
+  dateNote:'Multiplicadores activos · la fecha sigue las órbitas',toast:'Toque un planeta para ir · arrastre para mirar',all:'Todo',
+  units:[' s',' min',' h',' días',' meses',' años'],speedFmt:(n,u)=>n+u+'/s',mstop:'Detenido',mx:'{n}×',km:'km',mkm:'millones de km',
+  kinds:{star:'Estrella · secuencia principal G2V',rocky:'Planeta · rocoso',gas:'Planeta · gigante gaseoso',ice:'Planeta · gigante helado',dwarf:'Planeta enano · objeto del cinturón de Kuiper',moonOf:'Luna de {p}'},bc:'a. C. ',
+  intro:['En este momento,','giras alrededor del Sol a unos 30 km por segundo.','Y el Sol gira alrededor de nuestra galaxia a unos 230 km por segundo.','Este es nuestro universo.'],
+  start:'Empezar a explorar',bdayAsk:'¿Dónde estaban los planetas el día que nací?',skip:'Saltar',bdayBtn:'Cumpleaños',bdayKind:'Viaje de cumpleaños',bdayTitle:'El cielo de mi cumpleaños',bdayLabel:'Fecha de nacimiento',bdayGo:'Ir a ese día',
+  bdayAges:'Mi edad en cada planeta',age:'{n} años',next:'Próximo: {d}',traveled:'Desde que naciste has recorrido {n} alrededor del Sol con la Tierra.',replay:'Reproducir desde ese día hasta hoy',
+  bdayHint:'Posiciones de los planetas al mediodía (UTC) del {d}. El tiempo está en pausa.',invalid:'Introduce una fecha posterior a 1900 y anterior a hoy.',close:'Cerrar',
+  bigKm:km=>(km/1e9).toLocaleString('es-ES',{maximumFractionDigits:1})+' mil millones de km'}
+};
+UI.fr=Object.assign({"title": "Notre Univers", "sub": "Le Système solaire", "settings": "Réglages", "loading": "Peinture de la surface des planètes…", "scale": "Distances et tailles", "compressed": "Comprimé", "real": "Échelle réelle", "sizeMul": "Taille des astres", "modeHintC": "Les distances sont réduites par une racine carrée et les tailles diminuées pour que tout tienne sur un écran. Les anneaux et les lunes proches gardent leurs proportions réelles.", "modeHintR": "Distances et tailles à l'échelle réelle (1 unité = 1 million de km). À 1×, les planètes sont plus petites qu'un pixel : repérez-les grâce aux étiquettes. Agrandir les astres agrandit aussi les orbites des lunes ; le Soleil s'arrête à 30×.", "motion": "Mouvement", "timeFlow": "Écoulement du temps", "orbitMul": "Vitesse orbitale", "rotMul": "Vitesse de rotation", "mulHint": "À 1×, les deux suivent les proportions réelles. À l'extrême gauche, tout s'arrête.", "view": "Afficher", "orbits": "Orbites", "labels": "Étiquettes", "moons": "Lunes", "belts": "Ceinture d'astéroïdes · Troyens · Ceinture de Kuiper", "howto": "Commandes", "help": "Faites glisser pour tourner, molette ou pincement pour zoomer, clic droit glissé ou glissement à deux doigts pour déplacer. Touchez un astre pour vous y rendre et le suivre.", "keys": "<kbd>Espace</kbd> pause/lecture · <kbd>0</kbd>–<kbd>9</kbd> du Soleil à Pluton · <kbd>Échap</kbd> vue d'ensemble", "latest": "À savoir", "fallback": "", "overview": "Tout le Système solaire", "toParent": "Retour à {p}", "moonsOf": "Lunes de {p}", "now": "Maintenant", "perSec": "Par seconde", "presets": ["Temps réel", "1 heure", "1 jour", "1 mois", "1 an"], "pause": "Pause", "play": "Lecture", "reverse": "Remonter le temps", "diameter": "Diamètre", "gravity": "Gravité de surface", "day": "Rotation", "year": "Orbite (1 an)", "temp": "Temp. moyenne", "surfTemp": "Temp. de surface", "xEarth": "{n}× la Terre", "xMoon": "{n}× la Lune", "orbitP": "Période orbitale", "distParent": "Distance à la planète", "cmpEarth": "Taille comparée à la Terre", "cmpMoon": "Taille comparée à la Lune", "meanDist": "Distance moyenne au Soleil", "nowDist": "Distance actuelle", "ecc": "Excentricité", "tilt": "Inclinaison de l'axe", "known": "Lunes connues", "shown": "{n} affichées", "count": "{n}", "inc": "Inclinaison", "eqRef": "par rapport à l'équateur", "eclRef": "par rapport à l'écliptique", "xRadius": "{n}× le rayon de la planète", "retro": "rétrograde", "h": " h", "d": " jours", "y": " ans", "smallMoon": "Les petites lunes sont en réalité très irrégulières, en forme de pommes de terre. Leur position sur l'orbite est une valeur représentative.", "dateNote": "Multiplicateurs actifs · la date suit les orbites", "toast": "Touchez une planète pour vous y rendre · faites glisser pour regarder autour", "all": "Tout", "units": [" s", " min", " h", " jours", " mois", " ans"], "mstop": "Arrêté", "mx": "{n}×", "km": "km", "mkm": "millions de km", "kinds": {"star": "Étoile · séquence principale G2V", "rocky": "Planète · tellurique", "gas": "Planète · géante gazeuse", "ice": "Planète · géante de glaces", "dwarf": "Planète naine · objet de la ceinture de Kuiper", "moonOf": "Lune de {p}"}, "bc": "av. J.-C. ", "intro": ["En ce moment même,", "vous tournez autour du Soleil à environ 30 km par seconde.", "Et le Soleil tourne autour de notre galaxie à environ 230 km par seconde.", "Voici notre univers."], "start": "Commencer l'exploration", "bdayAsk": "Où étaient les planètes le jour de mon anniversaire ?", "skip": "Passer", "bdayBtn": "Anniversaire", "bdayKind": "Voyage d'anniversaire", "bdayTitle": "Le ciel de mon anniversaire", "bdayLabel": "Date de naissance", "bdayGo": "Aller à ce jour", "bdayAges": "Mon âge sur chaque planète", "age": "{n} ans", "next": "Prochain : {d}", "traveled": "Depuis votre naissance, vous avez parcouru {n} autour du Soleil avec la Terre.", "replay": "Lire depuis ce jour jusqu'à aujourd'hui", "bdayHint": "Les planètes sont montrées telles qu'elles étaient à midi (UTC) le {d}. Le temps est en pause.", "invalid": "Saisissez une date postérieure à 1900 et antérieure à aujourd'hui.", "close": "Fermer"},{speedFmt:(n,u)=>n+u+' / s',bigKm:km=>(km/1e9).toLocaleString('fr-FR',{maximumFractionDigits:1})+' milliards de km'});
+const TOUR={
+ ko:{tourBtn:'우주 주소',tourLink:'우리의 우주 주소 따라가기 →',backSolar:'태양계 탐험하기',replayTour:'다시 보기',tourEnd:'이 모든 것이, 우리의 우주입니다.',
+  addr:['대한민국','지구','태양계','우리은하','국부은하군','라니아케아 초은하단','관측 가능한 우주'],
+  cap:['한반도 남쪽 · 넓이 약 10만 ㎢','지름 1만 2,742 km · 빛으로 0.04초','해왕성 궤도까지 지름 약 90억 km · 빛으로 약 8시간','지름 약 10만 광년 · 별 1,000억~4,000억 개 · 태양은 중심에서 약 2만 6천 광년','지름 약 1,000만 광년 · 은하 80여 개 · 안드로메다 은하까지 250만 광년','지름 약 5억 2천만 광년 · 은하 약 10만 개 · 하와이어로 "헤아릴 수 없는 하늘"(2014년 발표)','지름 약 930억 광년 · 은하 수천억 개 이상 · 빛이 우리에게 닿을 수 있는 끝'],
+  cl:{dist:'250만 광년',sun:'태양 · 여기',mw:'우리은하',here:'우리은하 · 여기',m31:'안드로메다 은하',m33:'삼각형자리 은하',lmc:'대마젤란은하',smc:'소마젤란은하',ga:'거대 인력체',cmb:'우주 배경 복사'}},
+ en:{tourBtn:'Cosmic address',tourLink:'Follow our cosmic address →',backSolar:'Explore the Solar System',replayTour:'Watch again',tourEnd:'All of this is our universe.',
+  addr:['South Korea','Earth','Solar System','Milky Way','Local Group','Laniakea Supercluster','Observable Universe'],
+  cap:['Southern Korean Peninsula · about 100,000 km²','12,742 km across · 0.04 light-seconds','About 9 billion km across to Neptune\'s orbit · about 8 light-hours','About 100,000 light-years across · 100–400 billion stars · the Sun is about 26,000 light-years from the centre','About 10 million light-years across · 80+ galaxies · Andromeda is 2.5 million light-years away','About 520 million light-years across · about 100,000 galaxies · Hawaiian for "immeasurable heaven" (2014)','About 93 billion light-years across · hundreds of billions of galaxies · as far as light can reach us'],
+  cl:{dist:'2.5 million light-years',sun:'Sun · you are here',mw:'Milky Way',here:'Milky Way · you are here',m31:'Andromeda Galaxy',m33:'Triangulum Galaxy',lmc:'Large Magellanic Cloud',smc:'Small Magellanic Cloud',ga:'Great Attractor',cmb:'Cosmic microwave background'}},
+ ja:{tourBtn:'宇宙の住所',tourLink:'私たちの宇宙の住所をたどる →',backSolar:'太陽系を探検する',replayTour:'もう一度見る',tourEnd:'このすべてが、私たちの宇宙です。',
+  addr:['大韓民国','地球','太陽系','天の川銀河','局所銀河群','ラニアケア超銀河団','観測可能な宇宙'],
+  cap:['朝鮮半島の南側・面積約10万km²','直径1万2,742km・光で0.04秒','海王星の軌道まで直径約90億km・光で約8時間','直径約10万光年・恒星1000億〜4000億個・太陽は中心から約2万6千光年','直径約1000万光年・銀河80個以上・アンドロメダ銀河まで250万光年','直径約5億2千万光年・銀河約10万個・ハワイ語で「計り知れない天」（2014年発表）','直径約930億光年・数千億個以上の銀河・光が私たちに届く果て'],
+  cl:{dist:'250万光年',sun:'太陽・ここ',mw:'天の川銀河',here:'天の川銀河・ここ',m31:'アンドロメダ銀河',m33:'さんかく座銀河',lmc:'大マゼラン雲',smc:'小マゼラン雲',ga:'グレート・アトラクター',cmb:'宇宙マイクロ波背景放射'}},
+ zh:{tourBtn:'宇宙地址',tourLink:'追寻我们的宇宙地址 →',backSolar:'探索太阳系',replayTour:'再看一遍',tourEnd:'这一切，就是我们的宇宙。',
+  addr:['韩国','地球','太阳系','银河系','本星系群','拉尼亚凯亚超星系团','可观测宇宙'],
+  cap:['朝鲜半岛南部 · 面积约10万平方公里','直径12,742公里 · 光走0.04秒','到海王星轨道直径约90亿公里 · 光走约8小时','直径约10万光年 · 恒星1000亿至4000亿颗 · 太阳距中心约2.6万光年','直径约1000万光年 · 80多个星系 · 仙女座星系距离250万光年','直径约5.2亿光年 · 约10万个星系 · 夏威夷语意为"无量天堂"（2014年发表）','直径约930亿光年 · 数千亿个以上星系 · 光能到达我们的尽头'],
+  cl:{dist:'250万光年',sun:'太阳 · 你在这里',mw:'银河系',here:'银河系 · 你在这里',m31:'仙女座星系',m33:'三角座星系',lmc:'大麦哲伦云',smc:'小麦哲伦云',ga:'巨引源',cmb:'宇宙微波背景'}},
+ es:{tourBtn:'Dirección cósmica',tourLink:'Sigue nuestra dirección cósmica →',backSolar:'Explorar el sistema solar',replayTour:'Ver de nuevo',tourEnd:'Todo esto es nuestro universo.',
+  addr:['Corea del Sur','Tierra','Sistema solar','Vía Láctea','Grupo Local','Supercúmulo Laniakea','Universo observable'],
+  cap:['Sur de la península de Corea · unos 100.000 km²','12.742 km de diámetro · 0,04 segundos luz','Unos 9.000 millones de km hasta la órbita de Neptuno · unas 8 horas luz','Unos 100.000 años luz · 100.000–400.000 millones de estrellas · el Sol está a unos 26.000 años luz del centro','Unos 10 millones de años luz · más de 80 galaxias · Andrómeda está a 2,5 millones de años luz','Unos 520 millones de años luz · unas 100.000 galaxias · en hawaiano, "cielo inconmensurable" (2014)','Unos 93.000 millones de años luz · cientos de miles de millones de galaxias · hasta donde la luz puede llegarnos'],
+  cl:{dist:'2,5 millones de años luz',sun:'Sol · estás aquí',mw:'Vía Láctea',here:'Vía Láctea · estás aquí',m31:'Galaxia de Andrómeda',m33:'Galaxia del Triángulo',lmc:'Gran Nube de Magallanes',smc:'Pequeña Nube de Magallanes',ga:'Gran Atractor',cmb:'Fondo cósmico de microondas'}},
+ fr:{tourBtn:'Adresse cosmique',tourLink:'Suivre notre adresse cosmique →',backSolar:'Explorer le Système solaire',replayTour:'Revoir',tourEnd:'Tout cela, c\'est notre univers.',
+  addr:['Corée du Sud','Terre','Système solaire','Voie lactée','Groupe local','Superamas Laniakea','Univers observable'],
+  cap:['Sud de la péninsule coréenne · environ 100 000 km²','12 742 km de diamètre · 0,04 seconde-lumière','Environ 9 milliards de km jusqu\'à l\'orbite de Neptune · environ 8 heures-lumière','Environ 100 000 années-lumière · 100 à 400 milliards d\'étoiles · le Soleil est à environ 26 000 années-lumière du centre','Environ 10 millions d\'années-lumière · plus de 80 galaxies · Andromède est à 2,5 millions d\'années-lumière','Environ 520 millions d\'années-lumière · environ 100 000 galaxies · « ciel incommensurable » en hawaïen (2014)','Environ 93 milliards d\'années-lumière · des centaines de milliards de galaxies · aussi loin que la lumière peut nous parvenir'],
+  cl:{dist:'2,5 millions d\'années-lumière',sun:'Soleil · vous êtes ici',mw:'Voie lactée',here:'Voie lactée · vous êtes ici',m31:'Galaxie d\'Andromède',m33:'Galaxie du Triangle',lmc:'Grand Nuage de Magellan',smc:'Petit Nuage de Magellan',ga:'Grand Attracteur',cmb:'Fond diffus cosmologique'}}
+};
+let lang='ko';
+// 기본은 한국어. 방문자가 직접 고른 언어만 기억한다.
+try{ const s=localStorage.getItem('ou-lang'); if(LANGS.includes(s)) lang=s; }catch(e){}
+const t=(k,v)=>{ let s=UI[lang]&&UI[lang][k]; if(s===undefined&&TOUR[lang]) s=TOUR[lang][k]; if(s===undefined) s=UI.en[k]; if(s===undefined) s=TOUR.en[k]; if(v) for(const x in v) s=s.split('{'+x+'}').join(v[x]); return s; };
+const fmt=(n,d=0)=>n.toLocaleString(LOCALE[lang],{maximumFractionDigits:d,minimumFractionDigits:d});
+
+/* ═════════ 표시 비율 ═════════ */
+const DEFAULT_SPEED=1/24; // 기본 시간 흐름: 1초에 1시간(대표 11-08)
+const state={mode:'compressed',sizeMul:1,speed:DEFAULT_SPEED,dir:1,paused:false,orbitMul:1,rotMul:1,showOrbits:true,showLabels:true,showMoons:true,showBelts:true,focus:null};
+let orbitDays=(Date.now()-J2000)/864e5, rotDays=orbitDays;
+const D={
+  dist(au){ return state.mode==='real'? au*149.5978707 : 22*Math.sqrt(au); },
+  rad(R){ return state.mode==='real'? R/1e6*state.sizeMul : Math.max(0.02,0.35*Math.sqrt(R/6371))*state.sizeMul; },
+  sunRad(){ return state.mode==='real'? 0.6957*Math.min(state.sizeMul,30) : 4.2; },
+  moonD(r){ if(state.mode==='real') return r; return r<=3? r : 3*Math.pow(r/3,0.35); }
+};
+
+/* ═════════ 표면 무늬 ═════════ */
+let SEED=1;
+function h3(x,y,z){ let h=(Math.imul(x,374761393)+Math.imul(y,668265263)+Math.imul(z,1274126177)+Math.imul(SEED,144665))|0; h=Math.imul(h^(h>>>13),1274126177); h^=h>>>16; return (h>>>0)/4294967295; }
+function sm(x){ return x*x*(3-2*x); }
+function noise(x,y,z){ const xi=Math.floor(x),yi=Math.floor(y),zi=Math.floor(z),xf=sm(x-xi),yf=sm(y-yi),zf=sm(z-zi),l=(a,b,q)=>a+(b-a)*q;
+  return l(l(l(h3(xi,yi,zi),h3(xi+1,yi,zi),xf),l(h3(xi,yi+1,zi),h3(xi+1,yi+1,zi),xf),yf),l(l(h3(xi,yi,zi+1),h3(xi+1,yi,zi+1),xf),l(h3(xi,yi+1,zi+1),h3(xi+1,yi+1,zi+1),xf),yf),zf); }
+function fbm(x,y,z,o){ let s=0,a=.5,f=1,n=0; for(let i=0;i<o;i++){ s+=a*noise(x*f,y*f,z*f); n+=a; a*=.5; f*=2.03; } return s/n; }
+function mix(a,b,q){ q=Math.max(0,Math.min(1,q)); return [a[0]+(b[0]-a[0])*q,a[1]+(b[1]-a[1])*q,a[2]+(b[2]-a[2])*q]; }
+function hex(s){ const n=parseInt(s.slice(1),16); return [n>>16&255,n>>8&255,n&255]; }
+function mul(c,k){ return [c[0]*k,c[1]*k,c[2]*k]; }
+function genTex(w,h,seed,paint,alpha){
+  if(TQ<1&&w>128){ w=Math.round(w*TQ); h=Math.round(h*TQ); }
+  SEED=seed; const cv=document.createElement('canvas'); cv.width=w; cv.height=h;
+  const ctx=cv.getContext('2d'), img=ctx.createImageData(w,h), d=img.data;
+  for(let j=0;j<h;j++){ const la=90-(j+.5)/h*180, cl=Math.cos(la*DEG), py=Math.sin(la*DEG);
+    for(let i=0;i<w;i++){ const lo=(i+.5)/w*360-180, c=paint(la,lo,cl*Math.cos(lo*DEG),py,cl*Math.sin(lo*DEG),i,j), k=(j*w+i)*4;
+      d[k]=c[0]; d[k+1]=c[1]; d[k+2]=c[2]; d[k+3]=alpha? c[3]:255; } }
+  ctx.putImageData(img,0,0); const tx=new THREE.CanvasTexture(cv); tx.encoding=THREE.sRGBEncoding; tx.anisotropy=4; return tx;
+}
+const LAND=[
+ [[-168,66],[-162,70],[-140,70],[-125,71],[-95,72],[-80,73],[-62,66],[-55,52],[-66,45],[-75,35],[-81,25],[-97,26],[-97,20],[-87,21],[-83,10],[-79,8],[-92,15],[-105,20],[-112,30],[-118,34],[-124,40],[-124,48],[-135,58],[-150,60],[-165,60]],
+ [[-73,78],[-60,82],[-30,83],[-20,75],[-22,70],[-42,60],[-50,64],[-56,72]],
+ [[-80,9],[-72,12],[-60,10],[-50,0],[-35,-5],[-39,-15],[-48,-25],[-58,-35],[-65,-42],[-68,-55],[-74,-50],[-72,-35],[-71,-18],[-81,-5],[-78,2]],
+ [[-10,36],[-9,43],[-2,47],[-5,48],[5,53],[8,57],[5,62],[15,69],[28,71],[40,67],[60,69],[70,73],[80,73],[100,78],[115,73],[140,72],[160,70],[180,68],[180,62],[163,58],[156,51],[143,47],[135,43],[129,35],[122,40],[121,31],[117,24],[109,21],[106,10],[100,13],[99,8],[103,1],[98,8],[95,16],[90,22],[80,15],[77,8],[73,19],[67,25],[57,25],[56,27],[50,30],[48,29],[51,25],[56,23],[59,22],[52,16],[43,13],[39,21],[34,28],[32,31],[35,36],[27,37],[26,40],[20,40],[14,45],[12,44],[16,41],[16,38],[10,44],[3,43],[-1,38],[-5,36]],
+ [[-17,15],[-17,21],[-13,28],[-6,36],[10,37],[11,33],[20,31],[32,31],[34,28],[43,12],[51,12],[48,4],[40,-3],[40,-15],[35,-24],[33,-28],[27,-34],[19,-35],[15,-27],[12,-17],[13,-6],[9,-1],[9,4],[5,6],[-8,4],[-13,8]],
+ [[113,-22],[114,-34],[123,-34],[131,-31],[138,-35],[146,-39],[150,-37],[153,-28],[153,-25],[146,-19],[142,-11],[136,-12],[131,-11],[126,-14],[122,-18]],
+ [[-5,50],[1,51],[-1,55],[-3,58],[-6,57],[-5,54]],[[130,31],[136,34],[140,35],[142,40],[141,45],[140,42],[135,35]],[[44,-25],[47,-25],[50,-15],[49,-12],[44,-17]],
+ [[109,-1],[117,7],[119,1],[116,-4]],[[95,5],[106,-6],[104,-5]],[[131,-1],[141,-3],[150,-10],[141,-9]],
+ [[-24,64],[-14,64],[-15,66],[-22,66]],[[166,-46],[174,-41],[178,-38],[172,-34]],[[120,22],[122,25],[121,18]],[[80,6],[82,8],[80,10]]
+];
+function landMask(w,h){ const cv=document.createElement('canvas'); cv.width=w; cv.height=h; const c=cv.getContext('2d');
+  c.fillStyle='#000'; c.fillRect(0,0,w,h); c.filter='blur('+(w/300)+'px)'; c.fillStyle='#fff';
+  for(const p of LAND){ c.beginPath(); p.forEach(([lo,la],i)=>{ const x=(lo+180)/360*w,y=(90-la)/180*h; i?c.lineTo(x,y):c.moveTo(x,y); }); c.closePath(); c.fill(); }
+  c.fillRect(0,(90+68)/180*h,w,h); return c.getImageData(0,0,w,h).data; }
+const PAINT={
+  sun:(la,lo,x,y,z)=>{ const n=fbm(x*18,y*18,z*18,4),g=fbm(x*4,y*4,z*4,3); return mix(hex('#ff9a2e'),hex('#fff1b8'),n*0.9+g*0.3); },
+  mercury:(la,lo,x,y,z)=>{ const n=fbm(x*5,y*5,z*5,5),r=Math.pow(1-Math.abs(noise(x*14,y*14,z*14)*2-1),10); return mul(hex('#9a948c'),0.55+n*0.7+r*0.25); },
+  venus:(la,lo,x,y,z)=>{ const n=fbm(x*2,y*7,z*2,5),v=fbm(x*3+n*2,y*9,z*3,4); return mix(hex('#c99a56'),hex('#f2e2b8'),v*1.2-0.1); },
+  moon:(la,lo,x,y,z)=>{ const mare=fbm(x*2.2,y*2.2,z*2.2,4)*(lo>-100&&lo<100?1.15:0.75),n=fbm(x*9,y*9,z*9,4),r=Math.pow(1-Math.abs(noise(x*22,y*22,z*22)*2-1),12);
+    const c=mare>0.55? mix(hex('#5a5753'),hex('#77736c'),n):mix(hex('#8f8b84'),hex('#c2beb6'),n); return mul(c,1+r*0.25); },
+  mars:(la,lo,x,y,z)=>{ const n=fbm(x*3,y*3,z*3,6),dk=fbm(x*1.6+7,y*1.6,z*1.6,4); let c=mix(hex('#c46a3a'),hex('#e09a63'),n);
+    if(dk>0.56) c=mix(c,hex('#6e3d26'),(dk-0.56)*4); if(la>-15&&la<-3&&lo>-110&&lo<-45&&noise(lo*.3,la*.6,1)>0.35) c=mix(c,hex('#5c3220'),0.6);
+    if(la>79+n*4||la<-81+n*4) c=mix(c,hex('#f4f1ea'),0.9); return c; },
+  jupiter:(la,lo,x,y,z)=>{ const tt=fbm(x*7,y*7,z*7,5),la2=la+(tt-0.5)*5+Math.sin(lo*DEG*3+la)*0.6;
+    const B=[[-90,'#7c7f86'],[-55,'#8d8a83'],[-40,'#c9b79a'],[-30,'#b3916d'],[-24,'#e6d9bf'],[-19,'#a3714c'],[-8,'#d8c4a2'],[-3,'#ece2c9'],[7,'#e3d3b2'],[9,'#9e6d48'],[18,'#ddc9a6'],[24,'#b28b66'],[31,'#e3d6bc'],[40,'#b99a77'],[52,'#8d8a83'],[90,'#7a7d85']];
+    let c=hex(B[0][1]); for(let i=0;i<B.length-1;i++){ if(la2>=B[i][0]&&la2<B[i+1][0]){ c=mix(hex(B[i][1]),hex(B[i+1][1]),sm((la2-B[i][0])/(B[i+1][0]-B[i][0]))); break; } }
+    c=mul(c,0.88+fbm(x*20,y*40,z*20,3)*0.24); const dl=(lo-60)/7.2,dt=(la+22.5)/5.4,e=dl*dl+dt*dt; if(e<1) c=mix(c,mix(hex('#c4664a'),hex('#e3a07a'),e),1-e*e); return c; },
+  saturn:(la,lo,x,y,z)=>{ const tt=fbm(x*5,y*5,z*5,4),la2=la+(tt-0.5)*3; let v=0.5+0.5*Math.sin(la2*0.42)*0.35+Math.sin(la2*1.3)*0.08;
+    let c=mix(hex('#c9ab76'),hex('#efdcae'),v); c=mul(c,0.93+fbm(x*30,y*60,z*30,2)*0.14);
+    const col=90-la,th=((lo%60)+60)%60-30,r=12/Math.cos(th*DEG); if(col<r) c=mix(c,hex('#9aa6a2'),0.75); if(col<4) c=mix(c,hex('#5f6a6c'),0.6); if(la<-70) c=mix(c,hex('#b8a27c'),0.4); return c; },
+  uranus:(la,lo,x,y,z)=>{ let c=mix(hex('#a9d6dc'),hex('#c5e6e6'),0.5+Math.sin(la*0.25)*0.15+fbm(x*3,y*12,z*3,3)*0.2-0.1); if(la>55) c=mix(c,hex('#e2f1ef'),(la-55)/35*0.8); return c; },
+  neptune:(la,lo,x,y,z)=>{ let c=mix(hex('#86b0db'),hex('#a8c9e8'),0.45+Math.sin(la*0.3)*0.12+fbm(x*3,y*14,z*3,4)*0.25-0.12);
+    const w=fbm(x*6,y*30,z*6,3); if(w>0.66&&Math.abs(la+25)<8) c=mix(c,hex('#f2f6fb'),(w-0.66)*4); const dl=(lo-40)/9,dt=(la-20)/5,e=dl*dl+dt*dt; if(e<1) c=mix(c,hex('#3f5f92'),(1-e)*0.7); return c; },
+  pluto:(la,lo,x,y,z)=>{ const n=fbm(x*4,y*4,z*4,5); let c=mix(hex('#a07e62'),hex('#d8c1a2'),n); const hl=(lo-175)/30,ht=(la-20)/30,he=hl*hl+ht*ht; if(he<1) c=mix(c,hex('#f3ebe0'),(1-he)*1.3);
+    if(la>-25&&la<5&&lo<120&&lo>-20) c=mix(c,hex('#4e2a1c'),0.75*(1-Math.abs(la+10)/15)); return c; },
+  charon:(la,lo,x,y,z)=>{ const n=fbm(x*5,y*5,z*5,5); let c=mix(hex('#77736e'),hex('#aaa59e'),n); if(la>62) c=mix(c,hex('#6b3d2c'),(la-62)/20); return c; },
+  io:(la,lo,x,y,z)=>{ const n=fbm(x*5,y*5,z*5,5),s=noise(x*16,y*16,z*16); let c=mix(hex('#d9c35a'),hex('#efe39a'),n); if(n<0.38) c=mix(c,hex('#c86f2e'),0.7); if(s>0.82) c=hex('#2a1d14'); if(s<0.12) c=mix(c,hex('#f5f0e1'),0.7); return c; },
+  europa:(la,lo,x,y,z)=>{ const n=fbm(x*4,y*4,z*4,4); let c=mix(hex('#cbbba3'),hex('#ece4d6'),n); const r=Math.abs(noise(x*9,y*9,z*9)-0.5),r2=Math.abs(noise(x*17+3,y*17,z*17)-0.5); if(r<0.02||r2<0.012) c=mix(c,hex('#8a5a3c'),0.8); return c; },
+  ganymede:(la,lo,x,y,z)=>{ const n=fbm(x*3,y*3,z*3,5); let c=n>0.52? mix(hex('#5e554a'),hex('#7a6f61'),n):mix(hex('#9c958a'),hex('#bdb6aa'),n); if(Math.abs(la)>65) c=mix(c,hex('#d8d6d2'),0.5); return c; },
+  callisto:(la,lo,x,y,z)=>{ const n=fbm(x*5,y*5,z*5,4),s=noise(x*30,y*30,z*30); let c=mix(hex('#3b342d'),hex('#5b5248'),n); if(s>0.78) c=mix(c,hex('#d8d2c8'),(s-0.78)*4); return c; },
+  titan:(la,lo,x,y,z)=>{ const n=fbm(x*3,y*6,z*3,3); return mix(hex('#c98a3c'),hex('#e2ad61'),0.5+n*0.3+(la>50?0.15:0)); },
+  enceladus:(la,lo,x,y,z)=>{ const n=fbm(x*6,y*6,z*6,4); let c=mix(hex('#e6eaee'),hex('#ffffff'),n); if(la<-60){ const st=Math.abs(Math.sin((lo+la*1.5)*DEG*4)); if(st<0.08) c=mix(c,hex('#7fb3d6'),0.8); } return c; },
+  iapetus:(la,lo,x,y,z)=>{ const n=fbm(x*5,y*5,z*5,4),lead=Math.cos((lo-90)*DEG)*Math.cos(la*DEG*0.9)+(n-0.5)*0.5; return lead>0.25? mix(hex('#2e2219'),hex('#4a382a'),n):mix(hex('#cfc8ba'),hex('#efe9de'),n); },
+  mimas:(la,lo,x,y,z)=>{ const n=fbm(x*7,y*7,z*7,4); let c=mix(hex('#9b9893'),hex('#c9c6c0'),n); const dl=lo+110,d=Math.sqrt(dl*dl+la*la); if(d<22&&d>17) c=mix(c,hex('#e9e6e1'),0.6); if(d<17) c=mul(c,0.8); return c; },
+  triton:(la,lo,x,y,z)=>{ const n=fbm(x*5,y*5,z*5,4); let c=mix(hex('#c9b7ad'),hex('#e7dbd2'),n); if(la<-15) c=mix(c,hex('#f1e2d6'),0.5); if(la>-10&&la<35&&noise(x*10,y*10,z*10)>0.6) c=mix(c,hex('#9d8a7e'),0.5); return c; },
+  rock:(c1,c2)=>(la,lo,x,y,z)=>{ const n=fbm(x*5,y*5,z*5,5),r=Math.pow(1-Math.abs(noise(x*12,y*12,z*12)*2-1),8); return mul(mix(hex(c1),hex(c2),n),0.85+r*0.3); }
+};
+function earthPlaceholder(){ const mk=(c,a)=>{ const cv=document.createElement('canvas'); cv.width=64; cv.height=32; const x=cv.getContext('2d'); x.fillStyle=c; x.globalAlpha=a; x.fillRect(0,0,64,32); const t=new THREE.CanvasTexture(cv); t.encoding=THREE.sRGBEncoding; return t; };
+  return {base:mk('#1d4f86',1),clouds:mk('#ffffff',0)}; }
+function earthFallback(){ const tx=earthTextures(); earthB.earthMat.map=tx.base; earthB.earthMat.needsUpdate=true; earthB.clouds.material.map=tx.clouds; earthB.clouds.material.needsUpdate=true; refreshEarthThumb(); }
+function refreshEarthThumb(){ earthB.thumb=thumb(earthB,72); const im=document.querySelector('.pick[data-id=earth] img'); if(im) im.src=earthB.thumb; if(state.focus===earthB&&!$('info').hidden) $('iThumb').src=earthB.thumb; }
+function earthTextures(){
+  const W=1024,H=512,m=landMask(W,H);
+  const base=genTex(W,H,7,(la,lo,x,y,z,i,j)=>{ const k=(j*W+i)*4,mv=m[k]/255,n=fbm(x*6,y*6,z*6,5),land=mv+(n-0.5)*0.55>0.5,al=Math.abs(la);
+    if(!land) return mix(hex('#0a2350'),hex('#1d5590'),Math.min(1,(1-mv)*0.4+n*0.5));
+    if(al>66&&(lo<-15&&lo>-75||la<-60)||la<-62) return mix(hex('#e9eef3'),hex('#ffffff'),n);
+    let c; const dry=fbm(x*3+11,y*3,z*3,4);
+    if(al<12) c=mix(hex('#2c5a25'),hex('#3f7230'),n); else if(al<34&&dry>0.47) c=mix(hex('#b99a62'),hex('#d8bf86'),n); else if(al<55) c=mix(hex('#4b7034'),hex('#7c8a4a'),n); else c=mix(hex('#3e5232'),hex('#7c7a66'),n);
+    if(n>0.68) c=mix(c,hex('#8a7b67'),0.5); return c; });
+  const clouds=genTex(W,H,9,(la,lo,x,y,z)=>{ const wx=fbm(x*2+5,y*2,z*2,3)-0.5, n=fbm(x*5+wx*2,y*5+wx,z*5-wx*2,6), al=Math.abs(la);
+    let a=(n-0.5)*3.4; if(al<10) a+=0.12; if(al>18&&al<32) a-=0.2; if(al>45&&al<65) a+=0.1; a=Math.max(0,Math.min(1,a)); return [255,255,255,a*a*235]; },true);
+  return {base,clouds};
+}
+function ringTexture(segs,inner,outer,seed,color){
+  const W=2048,cv=document.createElement('canvas'); cv.width=W; cv.height=4; const c=cv.getContext('2d'),img=c.createImageData(W,4); SEED=seed;
+  for(let i=0;i<W;i++){ const r=inner+(outer-inner)*(i+.5)/W; let a=0,col=hex(color); for(const s of segs){ if(r>=s[0]&&r<s[1]){ a=s[2]; if(s[3]) col=hex(s[3]); } }
+    a*=0.75+noise(r/180,0.5,0.5)*0.5; for(let j=0;j<4;j++){ const k=(j*W+i)*4; img.data[k]=col[0]; img.data[k+1]=col[1]; img.data[k+2]=col[2]; img.data[k+3]=Math.min(255,a*255); } }
+  c.putImageData(img,0,0); const tx=new THREE.CanvasTexture(cv); tx.encoding=THREE.sRGBEncoding; return tx;
+}
+
+/* ═════════ 천체 자료 ═════════
+   궤도: NASA JPL 근사 궤도 요소(J2000) [a, e, i, L, 근일점 경도, 승교점 경도, L 변화율(°/세기)]
+   자전축 북극: IAU 권고값(적경, 적위). g=표면 중력(m/s²), temp=평균 온도(°C)
+   names: [한국어, English, 日本語, 中文, Español]
+   notes: ko/en (ja·zh·es는 영어로 보여 줌) */
+const SUN={id:'sun',names:['태양','Sun','太陽','太阳','Sol'],kind:'star',R:695700,rot:609.12,tilt:7.25,pole:[286.13,63.87],color:'#f4b968',g:274,temp:5505,
+ notes:{ko:['태양계 전체 질량의 약 99.86%를 차지한다. 지름은 약 139만 km.','표면(광구) 온도는 약 5,500°C, 바깥 대기인 코로나는 100만°C가 넘는다.','적도는 약 25.4일, 극 부근은 약 35일에 한 번 돈다(차등 자전). 이 화면은 적도 값으로 돈다.','2024년 10월 NASA·NOAA가 태양 활동 25주기의 극대기 진입을 발표했다.','파커 태양 탐사선이 2024년 12월 24일 태양 표면에서 약 610만 km까지 다가가 가장 가까이 간 인공 물체가 됐다.'],
+  en:['Holds about 99.86% of the Solar System\'s mass. About 1.39 million km across.','The visible surface (photosphere) is about 5,500 °C; the outer corona exceeds 1 million °C.','The equator turns in about 25.4 days, the poles in about 35 (differential rotation). The equatorial value is used here.','In October 2024 NASA and NOAA announced that Solar Cycle 25 had reached its maximum period.','On 24 December 2024 Parker Solar Probe passed about 6.1 million km from the surface, the closest any human-made object has come.']}};
+const PLANETS=[
+ {id:'mercury',names:['수성','Mercury','水星','水星','Mercurio'],kind:'rocky',R:2439.7,rot:1407.6,tilt:0.03,pole:[281.01,61.42],color:'#a39d95',look:'mercury',moonCount:0,g:3.7,temp:167,
+  el:[0.38709927,0.20563593,7.00497902,252.25032350,77.45779628,48.33076593,149472.67411175],
+  notes:{ko:['공전 한 번(88일) 동안 자전을 1.5번 한다(3:2 공명). 그래서 해가 떴다가 다시 뜨기까지 약 176일이 걸린다.','궤도 이심률 0.21로 행성 가운데 궤도가 가장 찌그러져 있다. 낮에는 430°C, 밤에는 -180°C까지 오르내린다.','극지방의 늘 그늘진 크레이터 안에 물 얼음이 있다(메신저 탐사선).','유럽·일본 공동 탐사선 베피콜롬보가 2026년 11월 수성 궤도 진입을 앞두고 있다.'],
+   en:['It spins 1.5 times per 88-day orbit (3:2 resonance), so one sunrise-to-sunrise day lasts about 176 Earth days.','With eccentricity 0.21 it has the most stretched orbit of any planet. Days reach 430 °C, nights −180 °C.','Water ice sits in permanently shadowed polar craters (MESSENGER).','The European-Japanese BepiColombo mission is due to enter Mercury orbit in November 2026.']}},
+ {id:'venus',names:['금성','Venus','金星','金星','Venus'],kind:'rocky',R:6051.8,rot:-5832.6,tilt:177.36,pole:[272.76,67.16],color:'#e3c58c',look:'venus',moonCount:0,atmo:'#f0d9a0',g:8.87,temp:464,
+  el:[0.72333566,0.00677672,3.39467605,181.97909950,131.60246718,76.67984255,58517.81538729],
+  notes:{ko:['다른 행성과 반대 방향으로 자전한다. 자전 주기(243일)가 공전 주기(225일)보다 길다.','두꺼운 이산화탄소 대기 때문에 표면은 약 465°C, 기압은 지구의 약 92배다.','구름 꼭대기는 4일 만에 행성을 한 바퀴 도는 바람(슈퍼회전)에 실려 움직인다.','마젤란 탐사선 레이더 자료를 다시 분석한 연구(2023·2024)에서 최근 화산 분출 흔적이 나왔다.','표면은 구름에 가려 보이지 않으므로, 여기서는 구름 층을 그렸다.'],
+   en:['It spins backwards compared with most planets, and its 243-day rotation is longer than its 225-day year.','A thick carbon-dioxide atmosphere keeps the surface near 465 °C at about 92 times Earth\'s pressure.','The cloud tops race around the planet in about four days (super-rotation).','Re-analyses of Magellan radar data (2023, 2024) found signs of recent volcanic eruptions.','The surface is hidden by clouds, so the cloud deck is shown here.']}},
+ {id:'earth',names:['지구','Earth','地球','地球','Tierra'],kind:'rocky',R:6371.0,rot:23.9345,tilt:23.44,pole:[0,90],color:'#4f86c6',look:'earth',moonCount:1,atmo:'#6fa8ff',g:9.81,temp:15,
+  el:[1.00000261,0.01671123,-0.00001531,100.46457166,102.93768193,0,35999.37244981],
+  notes:{ko:['자전축이 23.44° 기울어 계절이 생긴다.','표면의 약 71%가 바다다. 우리는 지금 초속 약 30 km로 태양 둘레를 돌고 있다.','이 화면의 낮과 밤 경계는 아래 시간 막대의 날짜·시각(협정 세계시)에 맞춰 계산된다.','대륙은 단순화한 윤곽으로 그렸다.'],
+   en:['Its 23.44° axial tilt gives us seasons.','About 71% of the surface is ocean. Right now we are circling the Sun at about 30 km per second.','Day and night here match the date and time (UTC) shown in the time bar.','Continents are drawn as simplified outlines.']}},
+ {id:'mars',names:['화성','Mars','火星','火星','Marte'],kind:'rocky',R:3389.5,rot:24.6229,tilt:25.19,pole:[317.68,52.89],color:'#d0744a',look:'mars',moonCount:2,atmo:'#e8a27a',g:3.72,temp:-65,
+  el:[1.52371034,0.09339410,1.84969142,-4.55343205,-23.94362959,49.55953891,19140.30268499],
+  notes:{ko:['하루는 24시간 37분, 자전축 기울기 25.2°로 지구처럼 계절이 있다.','태양계에서 가장 높은 올림푸스 화산(약 22 km)과 길이 약 4,000 km의 매리너 협곡이 있다(협곡은 적도 아래 어두운 줄).','2025년 9월 NASA는 퍼서비어런스가 채취한 \'사파이어 캐니언\' 시료에서 생명 흔적일 수 있는 무늬를 발표했다. 아직 확정은 아니다.','양 극의 극관은 물 얼음과 드라이아이스로 되어 있다.'],
+   en:['A day lasts 24 h 37 min and its 25.2° tilt gives Earth-like seasons.','Home to Olympus Mons (about 22 km high), the tallest volcano known, and the 4,000 km Valles Marineris (dark streak below the equator).','In September 2025 NASA reported possible biosignatures in Perseverance\'s "Sapphire Canyon" sample. Not yet confirmed.','The polar caps are water ice and carbon-dioxide ice.']}},
+ {id:'jupiter',names:['목성','Jupiter','木星','木星','Júpiter'],kind:'gas',R:69911,rot:9.925,tilt:3.13,pole:[268.06,64.50],color:'#d6b98f',look:'jupiter',moonCount:97,g:24.79,temp:-110,
+  el:[5.20288700,0.04838624,1.30439695,34.39644051,14.72847983,100.47390909,3034.74612775],
+  rings:{inner:92000,outer:226000,color:'#8a7660',seed:3,segs:[[92000,122500,0.04],[122500,129000,0.18],[129000,226000,0.03]]},
+  notes:{ko:['지름은 지구의 약 11배, 질량은 다른 행성을 모두 합친 것의 약 2.5배다.','대적점은 계속 작아져 2020년대에는 가로 약 1.3만~1.4만 km로, 지구가 겨우 들어갈 크기다. 모양도 점점 둥글어지고 있다.','주노 탐사선 관측으로 중심핵이 경계가 뚜렷하지 않은 \'묽은 핵\'이라는 것이 밝혀졌다.','확인된 위성은 97개(2025년 기준). 여기서는 대표 16개를 실제 궤도 값으로 보여 준다.','희미한 고리가 있다. 유로파 클리퍼(2030년 도착 예정)와 주스(2031년 도착 예정)가 가는 중이다.'],
+   en:['About 11 times Earth\'s diameter, and 2.5 times the mass of all other planets combined.','The Great Red Spot keeps shrinking: in the 2020s it is about 13,000–14,000 km wide, barely Earth-sized, and getting rounder.','Juno found a "dilute" core with no sharp boundary.','97 known moons (as of 2025); 16 major ones are shown with real orbital values.','It has faint rings. Europa Clipper (arriving 2030) and JUICE (arriving 2031) are on their way.']}},
+ {id:'saturn',names:['토성','Saturn','土星','土星','Saturno'],kind:'gas',R:58232,rot:10.561,tilt:26.73,pole:[40.59,83.54],color:'#e6cf98',look:'saturn',moonCount:274,g:10.44,temp:-140,
+  el:[9.53667594,0.05386179,2.48599187,49.95424423,92.59887831,113.66242448,1222.49362201],
+  rings:{inner:66900,outer:140300,color:'#cdbb96',seed:5,segs:[[66900,74500,0.05,'#7d7364'],[74500,92000,0.28,'#8f8270'],[92000,117580,0.92,'#dccbaa'],[117580,122170,0.07,'#6d6558'],[122170,133400,0.62,'#c8b691'],[133400,133730,0],[133730,136485,0.55,'#c2b08b'],[136485,136530,0],[136530,136775,0.5],[136775,140100,0],[140100,140300,0.55,'#d9cfb8']]},
+  notes:{ko:['평균 밀도가 물보다 낮다(0.69 g/cm³).','2025년 3월 위성 128개가 새로 공인되어 확인된 위성이 274개로 늘었다. 여기서는 대표 15개를 실제 궤도 값으로 보여 준다.','2025년 3월 지구가 토성 고리면을 지나 지구에서 고리가 거의 보이지 않았다. 고리는 지름이 27만 km가 넘지만 두께는 대부분 수십 m 정도다.','북극의 육각형 제트기류(한 변이 약 1.4만 km)를 그려 넣었다.','고리의 나이는 수억 년으로 젊다는 카시니 자료 해석과, 오래되었을 수 있다는 2024년 반론이 함께 논의되고 있다.'],
+   en:['Its mean density is lower than water (0.69 g/cm³).','128 new moons were recognised in March 2025, bringing the total to 274; 15 major ones are shown.','In March 2025 Earth crossed the ring plane, so the rings nearly vanished from our view. They span over 270,000 km yet are mostly only tens of metres thick.','The hexagonal jet stream at the north pole (each side about 14,000 km) is drawn in.','Cassini data suggest the rings are only a few hundred million years old; a 2024 study argues they could be far older.']}},
+ {id:'uranus',names:['천왕성','Uranus','天王星','天王星','Urano'],kind:'ice',R:25362,rot:-17.2479,tilt:97.77,pole:[257.31,-15.18],color:'#aed8dc',look:'uranus',moonCount:29,atmo:'#bfe8ea',g:8.69,temp:-195,
+  el:[19.18916464,0.04725744,0.77263783,313.23810451,170.95427630,74.01692503,428.48202785],
+  rings:{inner:41000,outer:51400,color:'#5b5b5d',seed:8,segs:[[41820,41850,0.5],[42220,42250,0.5],[42560,42590,0.5],[44700,44740,0.55],[45640,45680,0.55],[47160,47190,0.45],[47610,47640,0.5],[48280,48320,0.6],[50010,50040,0.35],[51100,51200,0.85]]},
+  notes:{ko:['자전축이 97.8° 기울어 거의 옆으로 누운 채 공전한다.','2025년 허블 우주망원경 관측으로 자전 주기가 17시간 14분 52초로 새로 측정됐다. 이 화면은 그 값을 쓴다.','2024년 옥스퍼드 대학 연구진이 보이저 2호 사진의 색을 보정해, 천왕성과 해왕성의 실제 색이 둘 다 옅은 청록색에 가깝다는 것을 보였다. 이 화면의 색은 그 결과를 따랐다.','2025년 제임스 웹 우주망원경이 새 위성(S/2025 U1)을 찾아 위성은 29개가 됐다.','어둡고 가는 고리 13개가 있다(안쪽 10개를 표시).'],
+   en:['Tilted 97.8°, it rolls around the Sun almost on its side.','Hubble observations in 2025 refined its rotation to 17 h 14 min 52 s, the value used here.','A 2024 Oxford study re-balanced Voyager 2 images and showed Uranus and Neptune are both a similar pale greenish-blue. The colours here follow that result.','In 2025 the James Webb Space Telescope found a new moon (S/2025 U1), bringing the count to 29.','It has 13 dark, narrow rings (the inner 10 are shown).']}},
+ {id:'neptune',names:['해왕성','Neptune','海王星','海王星','Neptuno'],kind:'ice',R:24622,rot:16.11,tilt:28.32,pole:[299.36,43.46],color:'#8db6e0',look:'neptune',moonCount:16,atmo:'#a6c8f0',g:11.15,temp:-200,
+  el:[30.06992276,0.00859048,1.77004347,-55.12002969,44.96476227,131.78422574,218.45945325],
+  rings:{inner:40000,outer:63200,color:'#5b5d63',seed:11,segs:[[40900,42900,0.08],[53150,53260,0.4],[53260,57200,0.05],[57150,57250,0.25],[62900,62960,0.55]]},
+  notes:{ko:['태양에서 가장 먼 행성으로 한 바퀴 도는 데 약 165년이 걸린다.','태양계에서 가장 빠른 바람(시속 2,000 km 이상)이 분다.','보이저 2호의 짙은 파란 사진은 대비를 강하게 한 것이다. 실제로는 천왕성보다 조금 더 푸른 정도다(2024년 연구).','가장 큰 위성 트리톤은 반대 방향으로 공전하며, 카이퍼대에서 붙잡혀 온 천체로 본다.','확인된 위성은 16개다(2024년 2개 추가). 고리 속 \'고리 호(아크)\'는 표시하지 않았다.'],
+   en:['The most distant planet; one orbit takes about 165 years.','It has the fastest winds in the Solar System, over 2,000 km/h.','Voyager 2\'s deep-blue images were contrast-enhanced; it is only slightly bluer than Uranus (2024 study).','Its largest moon, Triton, orbits backwards and is thought to be a captured Kuiper belt object.','16 known moons (2 added in 2024). The ring arcs are not shown.']}},
+ {id:'pluto',names:['명왕성','Pluto','冥王星','冥王星','Plutón'],kind:'dwarf',R:1188.3,rot:-153.2935,tilt:122.53,pole:[132.99,-6.16],color:'#c9ab8c',look:'pluto',moonCount:5,g:0.62,temp:-225,
+  el:[39.48211675,0.24882730,17.14001206,238.92903833,224.06891629,110.30393684,145.20780515],
+  notes:{ko:['2006년 왜행성으로 다시 분류됐다.','2015년 뉴허라이즌스가 하트 모양의 톰보 지역과 질소 얼음 평원(스푸트니크 평원)을 찍었다.','가장 큰 위성 카론과 서로 같은 면만 마주 보도록 묶여 있다(서로 조석 고정).','궤도가 크게 기울고(17°) 찌그러져 있어, 일부 구간은 해왕성보다 태양에 가깝다.'],
+   en:['Reclassified as a dwarf planet in 2006.','In 2015 New Horizons imaged the heart-shaped Tombaugh Regio and the nitrogen-ice plain Sputnik Planitia.','Pluto and its largest moon Charon always show each other the same face (mutual tidal locking).','Its orbit is tilted 17° and so eccentric that part of it lies inside Neptune\'s.']}}
+];
+/* 위성: [이름 5개 언어, 모천체, 반지름, 궤도 반지름 km, 주기(일, 음수=역행), 기울기°, 기준면, 표면, 메모 {ko,en}] */
+const RK=['#5c5248','#7d7064'],SAT=['#a49d90','#c8c0b0'],UR=['#4a4846','#6a6764'],NP=['#5a5856','#7a7774'],PL=['#bdbab4','#dedbd5'];
+const RETRO={ko:'반대 방향으로 공전한다.',en:'Orbits backwards (retrograde).'};
+const MOONS=[
+ [['달','Moon','月','月球','Luna'],'earth',1737.4,384400,27.321661,5.145,'ecl','moon',{ko:'늘 같은 면을 지구로 향한다(이 화면도 그렇다). 해마다 약 3.8 cm씩 멀어진다. 2024년 창어 6호가 처음으로 달 뒷면 시료를 가져왔다.',en:'Always shows Earth the same face (as here). It drifts about 3.8 cm farther each year. In 2024 Chang\'e 6 returned the first samples from the far side.'}],
+ [['포보스','Phobos','フォボス','火卫一','Fobos'],'mars',11.27,9376,0.31891,1.08,'eq',['#5d5048','#7b6b5f'],{ko:'화성에 점점 가까워지고 있어 수천만 년 뒤 부서져 고리가 되거나 떨어질 것으로 본다.',en:'Spiralling inward; in tens of millions of years it will break into a ring or crash onto Mars.'}],
+ [['데이모스','Deimos','ダイモス','火卫二','Deimos'],'mars',6.2,23463,1.26244,1.79,'eq',['#7a6c60','#9c8c7d']],
+ [['메티스','Metis','メティス','木卫十六','Metis'],'jupiter',21.5,128000,0.2948,0.06,'eq',['#6e5e50','#8d7b69']],
+ [['아드라스테아','Adrastea','アドラステア','木卫十五','Adrastea'],'jupiter',8.2,129000,0.2983,0.03,'eq',['#6e5e50','#8d7b69']],
+ [['아말테아','Amalthea','アマルテア','木卫五','Amaltea'],'jupiter',83.5,181366,0.4982,0.37,'eq',['#8a3f28','#b3653f'],{ko:'태양계에서 가장 붉은 천체 가운데 하나다.',en:'One of the reddest objects in the Solar System.'}],
+ [['테베','Thebe','テーベ','木卫十四','Tebe'],'jupiter',49.3,221889,0.6745,1.08,'eq',['#6e5e50','#8d7b69']],
+ [['이오','Io','イオ','木卫一','Ío'],'jupiter',1821.6,421700,1.769138,0.05,'eq','io',{ko:'태양계에서 화산 활동이 가장 활발하다. 400개가 넘는 활화산이 있다.',en:'The most volcanically active world known, with more than 400 active volcanoes.'}],
+ [['유로파','Europa','エウロパ','木卫二','Europa'],'jupiter',1560.8,671034,3.551181,0.47,'eq','europa',{ko:'얼음 껍질 밑에 지구보다 많은 물을 품은 바다가 있다고 본다. NASA 유로파 클리퍼가 2030년에 도착한다.',en:'Beneath its ice shell lies an ocean thought to hold more water than Earth\'s. NASA\'s Europa Clipper arrives in 2030.'}],
+ [['가니메데','Ganymede','ガニメデ','木卫三','Ganímedes'],'jupiter',2634.1,1070412,7.154553,0.20,'eq','ganymede',{ko:'태양계에서 가장 큰 위성으로 수성보다 크다. 스스로 자기장을 만드는 유일한 위성이다.',en:'The largest moon in the Solar System, bigger than Mercury, and the only moon with its own magnetic field.'}],
+ [['칼리스토','Callisto','カリスト','木卫四','Calisto'],'jupiter',2410.3,1882709,16.689018,0.19,'eq','callisto',{ko:'태양계에서 크레이터가 가장 빽빽한 천체 가운데 하나다.',en:'One of the most heavily cratered bodies in the Solar System.'}],
+ [['레다','Leda','レダ','木卫十三','Leda'],'jupiter',10,11165000,240.92,27.5,'ecl',RK],
+ [['히말리아','Himalia','ヒマリア','木卫六','Himalia'],'jupiter',69.8,11461000,250.56,27.5,'ecl',RK,{ko:'바깥쪽 불규칙 위성 무리 가운데 가장 크다.',en:'The largest of Jupiter\'s outer irregular moons.'}],
+ [['리시테아','Lysithea','リシテア','木卫十','Lisitea'],'jupiter',21,11717000,259.2,28.3,'ecl',RK],
+ [['엘라라','Elara','エララ','木卫七','Elara'],'jupiter',43,11741000,259.64,26.6,'ecl',RK],
+ [['아난케','Ananke','アナンケ','木卫十二','Ananké'],'jupiter',14,21276000,-629.8,31,'ecl',RK,RETRO],
+ [['카르메','Carme','カルメ','木卫十一','Carmé'],'jupiter',23,23404000,-734.2,15,'ecl',RK,RETRO],
+ [['파시파에','Pasiphae','パシファエ','木卫八','Pasífae'],'jupiter',30,23624000,-743.6,29,'ecl',RK,RETRO],
+ [['시노페','Sinope','シノーペ','木卫九','Sinope'],'jupiter',19,23939000,-758.9,22,'ecl',RK,RETRO],
+ [['판','Pan','パン','土卫十八','Pan'],'saturn',14.1,133584,0.575,0,'eq',SAT,{ko:'고리의 엥케 간극 안을 돌며 간극을 비워 둔다.',en:'Orbits inside the Encke Gap and keeps it clear.'}],
+ [['아틀라스','Atlas','アトラス','土卫十五','Atlas'],'saturn',15.1,137670,0.602,0,'eq',SAT],
+ [['프로메테우스','Prometheus','プロメテウス','土卫十六','Prometeo'],'saturn',43.1,139380,0.613,0.01,'eq',SAT,{ko:'판도라와 함께 F 고리를 붙잡아 두는 \'양치기 위성\'이다.',en:'A "shepherd moon" that, with Pandora, confines the F ring.'}],
+ [['판도라','Pandora','パンドラ','土卫十七','Pandora'],'saturn',40.7,141720,0.629,0.05,'eq',SAT],
+ [['에피메테우스','Epimetheus','エピメテウス','土卫十一','Epimeteo'],'saturn',58.1,151422,0.694,0.35,'eq',SAT,{ko:'야누스와 4년마다 궤도를 서로 바꾼다.',en:'Swaps orbits with Janus every four years.'}],
+ [['야누스','Janus','ヤヌス','土卫十','Jano'],'saturn',89.5,151472,0.695,0.17,'eq',SAT],
+ [['미마스','Mimas','ミマス','土卫一','Mimas'],'saturn',198.2,185539,0.942,1.57,'eq','mimas',{ko:'큰 허셜 크레이터가 있다. 2024년 카시니 자료로 얼음 껍질 아래 젊은 바다가 있다는 연구가 나왔다.',en:'Marked by the huge Herschel crater. A 2024 study of Cassini data points to a young ocean under its ice.'}],
+ [['엔셀라두스','Enceladus','エンケラドゥス','土卫二','Encélado'],'saturn',252.1,237948,1.370218,0.01,'eq','enceladus',{ko:'남극 \'호랑이 줄무늬\'에서 바닷물이 뿜어져 나온다. 2023년 그 속에서 인이 확인됐다.',en:'Ocean water sprays from its south-pole "tiger stripes"; phosphorus was found in it in 2023.'}],
+ [['테티스','Tethys','テティス','土卫三','Tetis'],'saturn',531.1,294619,1.887802,1.12,'eq',['#bdb9b2','#e4e0d8']],
+ [['디오네','Dione','ディオネ','土卫四','Dione'],'saturn',561.4,377396,2.736915,0.02,'eq',['#a7a39c','#d3cfc6']],
+ [['레아','Rhea','レア','土卫五','Rea'],'saturn',763.8,527108,4.518212,0.35,'eq',['#a29e98','#cfcbc4']],
+ [['타이탄','Titan','タイタン','土卫六','Titán'],'saturn',2574.7,1221870,15.945,0.35,'eq','titan',{ko:'짙은 질소 대기와 메탄 호수·강이 있다. NASA 드래곤플라이 회전익 탐사선이 2028년 발사 예정이다.',en:'Has a thick nitrogen atmosphere and methane lakes and rivers. NASA\'s Dragonfly rotorcraft is set to launch in 2028.'}],
+ [['히페리온','Hyperion','ヒペリオン','土卫七','Hiperión'],'saturn',135,1481010,21.277,0.43,'eq',['#8a7a68','#b3a28c'],{ko:'모양이 불규칙하고 자전이 혼돈스럽다.',en:'Irregular in shape, with a chaotic tumble.'}],
+ [['이아페투스','Iapetus','イアペトゥス','土卫八','Jápeto'],'saturn',734.5,3560820,79.3215,15.47,'eq','iapetus',{ko:'공전 방향 앞쪽 반구는 검고 뒤쪽은 하얀 두 얼굴 위성이다.',en:'Two-faced: its leading hemisphere is dark, its trailing one bright.'}],
+ [['포이베','Phoebe','フェーベ','土卫九','Febe'],'saturn',106.5,12947780,-550.31,5.1,'ecl',['#3a352f','#55504a'],{ko:'반대 방향으로 공전하며, 토성의 거대한 바깥 먼지 고리의 원천이다.',en:'Orbits backwards and feeds Saturn\'s enormous outer dust ring.'}],
+ [['코딜리아','Cordelia','コーデリア','天卫六','Cordelia'],'uranus',20,49770,0.335,0.08,'eq',UR],
+ [['오필리아','Ophelia','オフィーリア','天卫七','Ofelia'],'uranus',21,53790,0.376,0.10,'eq',UR],
+ [['비앙카','Bianca','ビアンカ','天卫八','Bianca'],'uranus',26,59165,0.435,0.19,'eq',UR],
+ [['크레시다','Cressida','クレシダ','天卫九','Crésida'],'uranus',40,61767,0.464,0.01,'eq',UR],
+ [['데스데모나','Desdemona','デズデモーナ','天卫十','Desdémona'],'uranus',32,62659,0.474,0.11,'eq',UR],
+ [['줄리엣','Juliet','ジュリエット','天卫十一','Julieta'],'uranus',47,64358,0.493,0.07,'eq',UR],
+ [['포샤','Portia','ポーシャ','天卫十二','Porcia'],'uranus',68,66097,0.513,0.06,'eq',UR],
+ [['로절린드','Rosalind','ロザリンド','天卫十三','Rosalinda'],'uranus',36,69927,0.558,0.28,'eq',UR],
+ [['큐피드','Cupid','キューピッド','天卫二十七','Cupido'],'uranus',9,74392,0.613,0.1,'eq',UR],
+ [['벨린다','Belinda','ベリンダ','天卫十四','Belinda'],'uranus',45,75255,0.624,0.03,'eq',UR],
+ [['퍼디타','Perdita','パーディタ','天卫二十五','Perdita'],'uranus',15,76417,0.638,0,'eq',UR],
+ [['퍽','Puck','パック','天卫十五','Puck'],'uranus',81,86004,0.762,0.32,'eq',UR],
+ [['마브','Mab','マブ','天卫二十六','Mab'],'uranus',12,97736,0.923,0.13,'eq',['#5e6066','#7c7f86']],
+ [['미란다','Miranda','ミランダ','天卫五','Miranda'],'uranus',235.8,129390,1.413479,4.34,'eq',['#8f8d8a','#b9b6b1'],{ko:'높이 약 20 km의 절벽 베로나 루페스가 있다.',en:'Home to Verona Rupes, a cliff about 20 km high.'}],
+ [['아리엘','Ariel','アリエル','天卫一','Ariel'],'uranus',578.9,191020,2.520379,0.04,'eq',['#9c9893','#c7c3bd']],
+ [['움브리엘','Umbriel','ウンブリエル','天卫二','Umbriel'],'uranus',584.7,266000,4.144177,0.13,'eq',['#57534f','#77736e']],
+ [['티타니아','Titania','チタニア','天卫三','Titania'],'uranus',788.4,435910,8.705872,0.08,'eq',['#8d8680','#b6aea6'],{ko:'천왕성의 가장 큰 위성이다.',en:'Uranus\'s largest moon.'}],
+ [['오베론','Oberon','オベロン','天卫四','Oberón'],'uranus',761.4,583520,13.463239,0.07,'eq',['#7d756f','#a59c94']],
+ [['칼리반','Caliban','キャリバン','天卫十六','Calibán'],'uranus',21,7231000,-579.7,39,'ecl',['#6b4f40','#8a6a58'],RETRO],
+ [['시코락스','Sycorax','シコラクス','天卫十七','Sycorax'],'uranus',78,12179000,-1288.3,21,'ecl',['#6b4f40','#8a6a58'],RETRO],
+ [['나이아드','Naiad','ナイアド','海卫三','Náyade'],'neptune',33,48227,0.294,4.69,'eq',NP],
+ [['탈라사','Thalassa','タラッサ','海卫四','Talasa'],'neptune',41,50074,0.311,0.14,'eq',NP],
+ [['데스피나','Despina','デスピナ','海卫五','Despina'],'neptune',75,52526,0.335,0.07,'eq',NP],
+ [['갈라테아','Galatea','ガラテア','海卫六','Galatea'],'neptune',88,61953,0.429,0.05,'eq',NP,{ko:'애덤스 고리를 붙잡아 두는 양치기 위성이다.',en:'The shepherd moon of the Adams ring.'}],
+ [['라리사','Larissa','ラリッサ','海卫七','Larisa'],'neptune',97,73548,0.555,0.2,'eq',NP],
+ [['히포캄프','Hippocamp','ヒッポカンプ','海卫十四','Hipocampo'],'neptune',17,105283,0.936,0,'eq',NP],
+ [['프로테우스','Proteus','プロテウス','海卫八','Proteo'],'neptune',210,117646,1.122,0.08,'eq',NP],
+ [['트리톤','Triton','トリトン','海卫一','Tritón'],'neptune',1353.4,354759,-5.876854,23.1,'eq','triton',{ko:'반대 방향으로 공전하는 큰 위성이다. 보이저 2호가 질소 간헐천을 찍었다.',en:'A large moon on a backwards orbit; Voyager 2 photographed nitrogen geysers.'}],
+ [['네레이드','Nereid','ネレイド','海卫二','Nereida'],'neptune',170,5513818,360.13,7.2,'ecl',['#6e6a66','#94908a'],{ko:'궤도가 매우 찌그러져 있다(이심률 0.75, 여기서는 원으로 단순화).',en:'Very eccentric orbit (0.75), simplified to a circle here.'}],
+ [['카론','Charon','カロン','冥卫一','Caronte'],'pluto',606,19591,6.387221,0.08,'eq','charon',{ko:'명왕성 지름의 절반이 넘어 둘이 함께 공통 무게중심을 돈다. 북극의 붉은 \'모르도르 반점\'이 있다.',en:'Over half Pluto\'s size, so the two orbit a shared centre of mass. Its north pole bears the reddish "Mordor Macula".'}],
+ [['스틱스','Styx','ステュクス','冥卫五','Estigia'],'pluto',8,42656,20.16,0.8,'eq',PL],
+ [['닉스','Nix','ニクス','冥卫二','Nix'],'pluto',25,48694,24.85,0.13,'eq',PL],
+ [['케르베로스','Kerberos','ケルベロス','冥卫四','Cerbero'],'pluto',9,57783,32.17,0.39,'eq',PL],
+ [['히드라','Hydra','ヒドラ','冥卫三','Hidra'],'pluto',25,64738,38.20,0.24,'eq',PL]
+];
+/* 일본어·중국어·스페인어·프랑스어 설명과 프랑스어 이름(번역 자료) */
+const I18X={"notes": {"sun": {"ja": ["太陽系の全質量の約99.86%を占める。直径は約139万km。", "表面（光球）の温度は約5,500°C、外側の大気であるコロナは100万°Cを超える。", "赤道は約25.4日、極付近は約35日で1回転する（差動回転）。この画面では赤道の値で回している。", "2024年10月、NASAとNOAAが太陽活動第25周期の極大期入りを発表した。", "パーカー・ソーラー・プローブは2024年12月24日に太陽表面から約610万kmまで接近し、最も太陽に近づいた人工物となった。"], "zh": ["占太阳系总质量的约99.86%。直径约139万公里。", "表面（光球）温度约5,500°C，外层大气日冕超过100万°C。", "赤道约25.4天自转一周，极区附近约35天（较差自转）。此画面按赤道数值自转。", "2024年10月，NASA和NOAA宣布太阳活动第25周期进入极大期。", "帕克太阳探测器于2024年12月24日飞到距太阳表面约610万公里处，成为离太阳最近的人造物体。"], "es": ["Concentra cerca del 99,86 % de la masa del sistema solar. Mide unos 1,39 millones de km de diámetro.", "La superficie visible (fotosfera) está a unos 5500 °C; la corona, su atmósfera exterior, supera el millón de °C.", "El ecuador gira en unos 25,4 días y las regiones polares en unos 35 (rotación diferencial). Aquí se usa el valor ecuatorial.", "En octubre de 2024, la NASA y la NOAA anunciaron que el ciclo solar 25 había entrado en su periodo de máxima actividad.", "El 24 de diciembre de 2024, la sonda Parker pasó a unos 6,1 millones de km de la superficie solar, el objeto humano que más se ha acercado al Sol."], "fr": ["Il concentre environ 99,86 % de la masse du Système solaire. Son diamètre est d'environ 1,39 million de km.", "La surface visible (photosphère) est à environ 5 500 °C ; la couronne, son atmosphère externe, dépasse 1 million de °C.", "L'équateur tourne en environ 25,4 jours, les pôles en environ 35 jours (rotation différentielle). La valeur équatoriale est utilisée ici.", "En octobre 2024, la NASA et la NOAA ont annoncé que le cycle solaire 25 était entré dans sa période de maximum.", "Le 24 décembre 2024, la sonde Parker Solar Probe est passée à environ 6,1 millions de km de la surface du Soleil, l'objet fabriqué par l'homme qui s'en est le plus approché."]}, "mercury": {"ja": ["公転1回（88日）の間に自転を1.5回する（3:2共鳴）。そのため日の出から次の日の出まで約176日かかる。", "軌道離心率0.21は惑星の中で最も軌道がゆがんでいる。昼は430°C、夜は−180°Cまで変わる。", "極地方のいつも影になっているクレーターの中に水の氷がある（メッセンジャー探査機）。", "欧州と日本の共同探査機ベピコロンボが2026年11月に水星周回軌道に入る予定である。"], "zh": ["公转一圈（88天）期间自转1.5圈（3:2共振）。因此从日出到下一次日出约需176天。", "轨道偏心率0.21，是行星中轨道最扁的。白天高达430°C，夜晚低至−180°C。", "极地终年不见阳光的陨击坑中存在水冰（信使号探测器）。", "欧洲与日本联合研制的贝皮可伦坡号预计于2026年11月进入水星轨道。"], "es": ["Gira 1,5 veces sobre sí mismo durante cada órbita de 88 días (resonancia 3:2), por lo que de un amanecer al siguiente pasan unos 176 días.", "Con una excentricidad de 0,21 tiene la órbita más alargada de todos los planetas. De día llega a 430 °C y de noche baja a −180 °C.", "Hay hielo de agua en cráteres polares permanentemente en sombra (sonda MESSENGER).", "La misión europeo-japonesa BepiColombo entrará en órbita de Mercurio en noviembre de 2026."], "fr": ["Il tourne 1,5 fois sur lui-même pendant chaque révolution de 88 jours (résonance 3:2) : d'un lever de Soleil au suivant, il s'écoule environ 176 jours.", "Avec une excentricité de 0,21, c'est la planète dont l'orbite est la plus allongée. La température passe de 430 °C le jour à −180 °C la nuit.", "De la glace d'eau subsiste dans des cratères polaires en permanence à l'ombre (sonde MESSENGER).", "La mission européano-japonaise BepiColombo doit entrer en orbite autour de Mercure en novembre 2026."]}, "venus": {"ja": ["他の惑星とは逆向きに自転する。自転周期（243日）が公転周期（225日）より長い。", "厚い二酸化炭素の大気のため、表面は約465°C、気圧は地球の約92倍である。", "雲の頂は4日で惑星を1周する風（スーパーローテーション）に乗って動いている。", "マゼラン探査機のレーダーデータを再解析した研究（2023・2024年）で、最近の火山噴火の痕跡が見つかった。", "表面は雲に隠れて見えないので、ここでは雲の層を描いた。"], "zh": ["自转方向与其他行星相反。自转周期（243天）比公转周期（225天）还长。", "由于浓厚的二氧化碳大气，表面温度约465°C，气压约为地球的92倍。", "云顶随着4天绕行星一周的大气环流（超级自转）移动。", "对麦哲伦号雷达数据的重新分析（2023、2024年）发现了近期火山喷发的痕迹。", "表面被云层遮住看不见，所以这里画的是云层。"], "es": ["Gira en sentido contrario al de los demás planetas. Su rotación (243 días) es más larga que su año (225 días).", "Una densa atmósfera de dióxido de carbono mantiene la superficie en torno a 465 °C, con una presión unas 92 veces la terrestre.", "Las cimas de las nubes dan la vuelta al planeta en unos cuatro días arrastradas por los vientos (superrotación).", "Nuevos análisis de los datos de radar de Magallanes (2023 y 2024) hallaron indicios de erupciones volcánicas recientes.", "La superficie queda oculta por las nubes, así que aquí se muestra la capa de nubes."], "fr": ["Elle tourne dans le sens inverse des autres planètes. Sa rotation (243 jours) est plus longue que son année (225 jours).", "Une épaisse atmosphère de dioxyde de carbone maintient la surface à environ 465 °C, sous une pression environ 92 fois celle de la Terre.", "Le sommet des nuages fait le tour de la planète en environ 4 jours, entraîné par les vents (super-rotation).", "De nouvelles analyses des données radar de Magellan (2023, 2024) ont révélé des traces d'éruptions volcaniques récentes.", "La surface est cachée par les nuages ; c'est donc la couche nuageuse qui est représentée ici."]}, "earth": {"ja": ["自転軸が23.44°傾いているので季節が生まれる。", "表面の約71%が海である。私たちは今、秒速約30kmで太陽のまわりを回っている。", "この画面の昼と夜の境目は、下の時間バーの日付・時刻（協定世界時）に合わせて計算している。", "大陸は単純化した輪郭で描いた。"], "zh": ["自转轴倾斜23.44°，因此有了四季。", "表面约71%是海洋。我们此刻正以每秒约30公里的速度绕太阳运行。", "此画面中的昼夜分界线，是按下方时间条的日期和时刻（协调世界时）计算的。", "大陆用简化的轮廓绘制。"], "es": ["La inclinación de su eje, de 23,44°, produce las estaciones.", "Cerca del 71 % de la superficie es océano. En este momento giramos alrededor del Sol a unos 30 km por segundo.", "El límite entre el día y la noche aquí se calcula según la fecha y la hora (UTC) de la barra de tiempo.", "Los continentes se dibujan con contornos simplificados."], "fr": ["L'inclinaison de son axe, 23,44°, est à l'origine des saisons.", "Environ 71 % de la surface est recouverte par les océans. En ce moment, nous tournons autour du Soleil à environ 30 km par seconde.", "La limite entre le jour et la nuit est calculée d'après la date et l'heure (UTC) de la barre de temps ci-dessous.", "Les continents sont dessinés avec des contours simplifiés."]}, "mars": {"ja": ["1日は24時間37分、自転軸の傾き25.2°で、地球のように季節がある。", "太陽系で最も高いオリンポス山（約22km）と、長さ約4,000kmのマリネリス峡谷がある（峡谷は赤道の下の暗い筋）。", "2025年9月、NASAはパーサヴィアランスが採取した「サファイア・キャニオン」の試料に、生命の痕跡かもしれない模様が見つかったと発表した。まだ確定ではない。", "両極の極冠は水の氷とドライアイスでできている。"], "zh": ["一天为24小时37分，自转轴倾角25.2°，像地球一样有四季。", "拥有太阳系最高的奥林匹斯山（约22公里）和长约4,000公里的水手谷（峡谷是赤道下方的暗色条纹）。", "2025年9月，NASA公布毅力号采集的“蓝宝石峡谷”样本中出现了可能是生命痕迹的纹理。尚未确认。", "两极的极冠由水冰和干冰构成。"], "es": ["Un día dura 24 h 37 min y su inclinación de 25,2° da estaciones como las de la Tierra.", "Alberga el Monte Olimpo (unos 22 km de altura), el volcán más alto conocido, y el Valles Marineris, de unos 4000 km (la franja oscura bajo el ecuador).", "En septiembre de 2025, la NASA informó de posibles biofirmas en la muestra «Sapphire Canyon» de Perseverance. Aún no está confirmado.", "Los casquetes polares son de hielo de agua y hielo de dióxido de carbono."], "fr": ["Un jour dure 24 h 37 min et l'inclinaison de 25,2° donne des saisons comparables à celles de la Terre.", "Elle abrite Olympus Mons (environ 22 km de haut), le plus grand volcan connu, et Valles Marineris, long de 4 000 km (la bande sombre sous l'équateur).", "En septembre 2025, la NASA a signalé de possibles biosignatures dans l'échantillon « Sapphire Canyon » de Perseverance. Ce n'est pas encore confirmé.", "Les calottes polaires sont faites de glace d'eau et de glace de dioxyde de carbone."]}, "jupiter": {"ja": ["直径は地球の約11倍、質量はほかの惑星をすべて合わせた約2.5倍である。", "大赤斑は小さくなり続け、2020年代には幅約1.3万〜1.4万kmと、地球がやっと入る大きさである。形もだんだん丸くなっている。", "ジュノー探査機の観測で、中心核は境界のはっきりしない「うすい核」だとわかった。", "確認された衛星は97個（2025年時点）。ここでは代表的な16個を実際の軌道の値で見せている。", "かすかな環がある。エウロパ・クリッパー（2030年到着予定）とジュース（2031年到着予定）が向かっている。"], "zh": ["直径约为地球的11倍，质量约为其他所有行星总和的2.5倍。", "大红斑不断缩小，2020年代宽约1.3万至1.4万公里，勉强能放下一个地球，形状也越来越圆。", "朱诺号的观测发现，其核心是边界不清晰的“稀释核”。", "已确认卫星97颗（截至2025年）。这里按真实轨道数值展示16颗代表性卫星。", "有暗淡的行星环。木卫二快船（预计2030年抵达）和木星冰月探测器（预计2031年抵达）正在前往。"], "es": ["Su diámetro es unas 11 veces el de la Tierra y su masa, unas 2,5 veces la de todos los demás planetas juntos.", "La Gran Mancha Roja sigue encogiendo: en la década de 2020 mide unos 13 000–14 000 km de ancho, apenas el tamaño de la Tierra, y es cada vez más redonda.", "Juno descubrió un núcleo «difuso», sin un límite definido.", "Tiene 97 lunas conocidas (en 2025); aquí se muestran 16 principales con sus valores orbitales reales.", "Tiene anillos tenues. Europa Clipper (llegará en 2030) y JUICE (llegará en 2031) están en camino."], "fr": ["Son diamètre vaut environ 11 fois celui de la Terre et sa masse environ 2,5 fois celle de toutes les autres planètes réunies.", "La Grande Tache rouge continue de rétrécir : dans les années 2020, elle mesure environ 13 000 à 14 000 km de large, à peine la taille de la Terre, et devient de plus en plus ronde.", "Juno a découvert un noyau « dilué », sans limite nette.", "On connaît 97 lunes (en 2025) ; 16 des principales sont représentées avec leurs valeurs orbitales réelles.", "Elle possède de faibles anneaux. Europa Clipper (arrivée en 2030) et JUICE (arrivée en 2031) sont en route."]}, "saturn": {"ja": ["平均密度が水より低い（0.69 g/cm³）。", "2025年3月に新たに128個の衛星が公認され、確認された衛星は274個になった。ここでは代表的な15個を実際の軌道の値で見せている。", "2025年3月に地球が土星の環の面を通過し、地球から環がほとんど見えなくなった。環は直径27万kmを超えるが、厚さはほとんどが数十m程度である。", "北極の六角形のジェット気流（1辺が約1.4万km）を描き込んだ。", "環の年齢は数億年と若いというカッシーニのデータの解釈と、もっと古いかもしれないという2024年の反論が併せて議論されている。"], "zh": ["平均密度比水还低（0.69 g/cm³）。", "2025年3月新确认了128颗卫星，已确认卫星增至274颗。这里按真实轨道数值展示15颗代表性卫星。", "2025年3月，地球穿过土星环平面，从地球上几乎看不到土星环。环的直径超过27万公里，但大部分厚度只有几十米。", "画出了北极的六边形急流（每边约1.4万公里）。", "关于土星环的年龄，卡西尼数据的解读认为只有几亿年，较年轻；2024年又有反驳认为可能古老得多，两种观点都在讨论中。"], "es": ["Su densidad media es menor que la del agua (0,69 g/cm³).", "En marzo de 2025 se reconocieron 128 lunas nuevas, con lo que el total asciende a 274; aquí se muestran 15 principales con sus valores orbitales reales.", "En marzo de 2025 la Tierra cruzó el plano de los anillos, y desde aquí casi desaparecieron de la vista. Abarcan más de 270 000 km, pero casi siempre tienen solo decenas de metros de grosor.", "Se ha dibujado la corriente en chorro hexagonal del polo norte (cada lado mide unos 14 000 km).", "Los datos de Cassini sugieren que los anillos tienen solo unos cientos de millones de años; un estudio de 2024 sostiene que podrían ser mucho más antiguos."], "fr": ["Sa masse volumique moyenne est inférieure à celle de l'eau (0,69 g/cm³).", "En mars 2025, 128 nouvelles lunes ont été reconnues, portant le total à 274 ; 15 des principales sont représentées avec leurs valeurs orbitales réelles.", "En mars 2025, la Terre a traversé le plan des anneaux, qui ont presque disparu de notre vue. Ils s'étendent sur plus de 270 000 km, mais n'ont le plus souvent que quelques dizaines de mètres d'épaisseur.", "Le jet-stream hexagonal du pôle nord (chaque côté mesure environ 14 000 km) est dessiné.", "Les données de Cassini suggèrent que les anneaux n'ont que quelques centaines de millions d'années ; une étude de 2024 soutient qu'ils pourraient être bien plus anciens."]}, "uranus": {"ja": ["自転軸が97.8°傾いていて、ほぼ横倒しのまま公転する。", "2025年のハッブル宇宙望遠鏡の観測で、自転周期が17時間14分52秒と新たに測定された。この画面はその値を使っている。", "2024年にオックスフォード大学の研究者がボイジャー2号の写真の色を補正し、天王星と海王星の本当の色はどちらも淡い青緑に近いことを示した。この画面の色はその結果に従った。", "2025年にジェイムズ・ウェッブ宇宙望遠鏡が新しい衛星（S/2025 U1）を見つけ、衛星は29個になった。", "暗くて細い環が13本ある（内側の10本を表示）。"], "zh": ["自转轴倾斜97.8°，几乎是“躺着”绕太阳公转。", "2025年哈勃空间望远镜的观测将其自转周期重新测定为17小时14分52秒。此画面采用该数值。", "2024年牛津大学研究团队校正了旅行者2号照片的色彩，表明天王星和海王星的真实颜色都接近淡青绿色。此画面的颜色依据该结果。", "2025年詹姆斯·韦布空间望远镜发现一颗新卫星（S/2025 U1），卫星数达到29颗。", "有13条暗而细的环（显示内侧10条）。"], "es": ["Con una inclinación de 97,8°, rueda alrededor del Sol casi de costado.", "Las observaciones del Hubble en 2025 precisaron su rotación en 17 h 14 min 52 s, el valor que se usa aquí.", "Un estudio de Oxford de 2024 reequilibró las imágenes del Voyager 2 y mostró que Urano y Neptuno son de un azul verdoso pálido similar. Los colores de aquí siguen ese resultado.", "En 2025 el telescopio espacial James Webb encontró una luna nueva (S/2025 U1), con lo que el total sube a 29.", "Tiene 13 anillos oscuros y estrechos (se muestran los 10 interiores)."], "fr": ["Inclinée de 97,8°, elle roule autour du Soleil presque sur le côté.", "Les observations de Hubble en 2025 ont précisé sa rotation à 17 h 14 min 52 s, valeur utilisée ici.", "Une étude d'Oxford de 2024 a rééquilibré les images de Voyager 2 et montré qu'Uranus et Neptune sont d'un même bleu-vert pâle. Les couleurs affichées ici suivent ce résultat.", "En 2025, le télescope spatial James Webb a découvert une nouvelle lune (S/2025 U1), portant leur nombre à 29.", "Elle possède 13 anneaux sombres et étroits (les 10 intérieurs sont représentés)."]}, "neptune": {"ja": ["太陽から最も遠い惑星で、1周するのに約165年かかる。", "太陽系で最も速い風（時速2,000km以上）が吹く。", "ボイジャー2号の濃い青の写真はコントラストを強めたものである。実際は天王星より少し青い程度だ（2024年の研究）。", "最大の衛星トリトンは逆向きに公転しており、カイパーベルトから捕らえられた天体と考えられている。", "確認された衛星は16個である（2024年に2個追加）。環の中の「環の弧（アーク）」は表示していない。"], "zh": ["离太阳最远的行星，绕太阳一圈约需165年。", "拥有太阳系中最快的风（时速超过2,000公里）。", "旅行者2号拍摄的深蓝色照片经过了增强对比度处理。实际上只比天王星稍蓝一点（2024年研究）。", "最大的卫星海卫一反向公转，被认为是从柯伊伯带捕获的天体。", "已确认卫星16颗（2024年新增2颗）。环中的“环弧”未显示。"], "es": ["Es el planeta más lejano; una órbita dura unos 165 años.", "Tiene los vientos más rápidos del sistema solar, de más de 2000 km/h.", "Las imágenes de azul intenso del Voyager 2 fueron realzadas en contraste; en realidad es solo algo más azul que Urano (estudio de 2024).", "Su luna mayor, Tritón, orbita en sentido contrario y se cree que es un objeto del cinturón de Kuiper capturado.", "Tiene 16 lunas conocidas (2 añadidas en 2024). Los arcos de los anillos no se muestran."], "fr": ["C'est la planète la plus éloignée ; une révolution dure environ 165 ans.", "Elle a les vents les plus rapides du Système solaire, supérieurs à 2 000 km/h.", "Les images d'un bleu profond de Voyager 2 avaient un contraste renforcé ; la planète est en réalité à peine plus bleue qu'Uranus (étude de 2024).", "Sa plus grande lune, Triton, circule à contre-sens et serait un objet de la ceinture de Kuiper capturé.", "On connaît 16 lunes (2 ajoutées en 2024). Les arcs des anneaux ne sont pas représentés."]}, "pluto": {"ja": ["2006年に準惑星に分類し直された。", "2015年にニュー・ホライズンズがハート形のトンボー領域と、窒素の氷の平原（スプートニク平原）を撮影した。", "最大の衛星カロンとは、お互いに同じ面だけを向け合っている（相互の潮汐固定）。", "軌道が大きく傾き（17°）、ゆがんでいるため、一部の区間は海王星より太陽に近い。"], "zh": ["2006年被重新归类为矮行星。", "2015年新视野号拍摄到心形的汤博区和氮冰平原（斯普特尼克平原）。", "与最大的卫星冥卫一始终以同一面相对（相互潮汐锁定）。", "轨道倾斜很大（17°）且很扁，部分路段比海王星更靠近太阳。"], "es": ["Fue reclasificado como planeta enano en 2006.", "En 2015 New Horizons fotografió la Tombaugh Regio, con forma de corazón, y la llanura de hielo de nitrógeno Sputnik Planitia.", "Plutón y su mayor luna, Caronte, se muestran siempre la misma cara (acoplamiento de marea mutuo).", "Su órbita está inclinada 17° y es tan excéntrica que parte de ella queda dentro de la de Neptuno."], "fr": ["Il a été reclassé planète naine en 2006.", "En 2015, New Horizons a photographié la région de Tombaugh, en forme de cœur, et la plaine de glace d'azote Spoutnik Planitia.", "Pluton et sa plus grande lune, Charon, se présentent toujours la même face (verrouillage de marée mutuel).", "Son orbite est inclinée de 17° et si excentrique qu'une partie se trouve à l'intérieur de celle de Neptune."]}}, "moonNotes": {"Moon": {"ja": "いつも同じ面を地球に向けている（この画面でもそうだ）。毎年約3.8cmずつ遠ざかっている。2024年に嫦娥6号が初めて月の裏側の試料を持ち帰った。", "zh": "始终以同一面朝向地球（此画面也是如此）。每年远离约3.8厘米。2024年嫦娥六号首次带回月球背面样本。", "es": "Siempre muestra a la Tierra la misma cara (como aquí). Se aleja unos 3,8 cm cada año. En 2024, Chang'e 6 trajo las primeras muestras de la cara oculta.", "fr": "Elle montre toujours la même face à la Terre (comme ici). Elle s'éloigne d'environ 3,8 cm par an. En 2024, Chang'e 6 a rapporté les premiers échantillons de la face cachée."}, "Phobos": {"ja": "火星にだんだん近づいており、数千万年後には砕けて環になるか、落下すると考えられている。", "zh": "正逐渐靠近火星，预计数千万年后会碎裂成环或坠落到火星上。", "es": "Se acerca en espiral a Marte; dentro de decenas de millones de años se romperá formando un anillo o caerá sobre el planeta.", "fr": "Il se rapproche de Mars en spirale ; dans quelques dizaines de millions d'années, il se brisera en un anneau ou s'écrasera sur la planète."}, "Amalthea": {"ja": "太陽系で最も赤い天体のひとつである。", "zh": "是太阳系中最红的天体之一。", "es": "Uno de los objetos más rojos del sistema solar.", "fr": "L'un des objets les plus rouges du Système solaire."}, "Io": {"ja": "太陽系で最も火山活動が活発である。400を超える活火山がある。", "zh": "太阳系中火山活动最活跃的天体，有400多座活火山。", "es": "El mundo con mayor actividad volcánica conocido, con más de 400 volcanes activos.", "fr": "Le monde le plus actif volcaniquement que l'on connaisse, avec plus de 400 volcans en activité."}, "Europa": {"ja": "氷の殻の下に、地球より多くの水を含む海があると考えられている。NASAのエウロパ・クリッパーが2030年に到着する。", "zh": "冰壳之下被认为有一片水量比地球还多的海洋。NASA的木卫二快船将于2030年抵达。", "es": "Bajo su corteza de hielo hay un océano que se cree contiene más agua que los de la Tierra. Europa Clipper de la NASA llegará en 2030.", "fr": "Sous sa croûte de glace se trouverait un océan contenant plus d'eau que ceux de la Terre. Europa Clipper de la NASA arrivera en 2030."}, "Ganymede": {"ja": "太陽系最大の衛星で、水星より大きい。自前の磁場をもつ唯一の衛星である。", "zh": "太阳系中最大的卫星，比水星还大。是唯一拥有自身磁场的卫星。", "es": "La luna más grande del sistema solar, mayor que Mercurio, y la única con campo magnético propio.", "fr": "La plus grande lune du Système solaire, plus grosse que Mercure, et la seule dotée d'un champ magnétique propre."}, "Callisto": {"ja": "太陽系で最もクレーターが密集している天体のひとつである。", "zh": "是太阳系中陨击坑最密集的天体之一。", "es": "Uno de los cuerpos con más cráteres del sistema solar.", "fr": "L'un des corps les plus criblés de cratères du Système solaire."}, "Himalia": {"ja": "木星の外側の不規則衛星群の中で最大である。", "zh": "是木星外侧不规则卫星群中最大的一颗。", "es": "La mayor de las lunas irregulares exteriores de Júpiter.", "fr": "La plus grande des lunes irrégulières externes de Jupiter."}, "Pan": {"ja": "環のエンケの隙間の中を回り、隙間を空けている。", "zh": "在环的恩克缝中运行，使缝隙保持空旷。", "es": "Orbita dentro de la división de Encke y la mantiene despejada.", "fr": "Elle orbite dans la division d'Encke et la maintient dégagée."}, "Prometheus": {"ja": "パンドラとともにF環をつなぎとめる「羊飼い衛星」である。", "zh": "与潘多拉一起约束F环的“牧羊犬卫星”。", "es": "Una «luna pastora» que, junto con Pandora, confina el anillo F.", "fr": "Une « lune bergère » qui, avec Pandore, confine l'anneau F."}, "Epimetheus": {"ja": "ヤヌスと4年ごとに軌道を入れ替える。", "zh": "每四年与土卫十交换一次轨道。", "es": "Intercambia órbitas con Jano cada cuatro años.", "fr": "Elle échange son orbite avec Janus tous les quatre ans."}, "Mimas": {"ja": "巨大なハーシェル・クレーターがある。2024年にカッシーニのデータから、氷の殻の下に若い海があるとする研究が発表された。", "zh": "有巨大的赫歇尔陨击坑。2024年对卡西尼数据的研究指出，冰壳之下可能有一片年轻的海洋。", "es": "Marcada por el enorme cráter Herschel. Un estudio de 2024 con datos de Cassini apunta a un océano joven bajo su hielo.", "fr": "Marquée par l'immense cratère Herschel. Une étude de 2024 sur les données de Cassini évoque un jeune océan sous sa glace."}, "Enceladus": {"ja": "南極の「虎縞」から海水が噴き出している。2023年にその中からリンが確認された。", "zh": "海水从南极的“虎纹”裂缝中喷出。2023年在其中确认了磷。", "es": "El agua del océano brota de sus «rayas de tigre» del polo sur; en 2023 se halló fósforo en ella.", "fr": "L'eau de l'océan jaillit de ses « rayures de tigre » au pôle Sud ; du phosphore y a été détecté en 2023."}, "Titan": {"ja": "濃い窒素の大気と、メタンの湖や川がある。NASAのドラゴンフライ回転翼機が2028年に打ち上げ予定である。", "zh": "有浓厚的氮大气以及甲烷湖泊和河流。NASA的蜻蜓号旋翼探测器计划于2028年发射。", "es": "Tiene una densa atmósfera de nitrógeno y lagos y ríos de metano. El helicóptero Dragonfly de la NASA se lanzará en 2028.", "fr": "Elle possède une épaisse atmosphère d'azote, des lacs et des rivières de méthane. Le drone Dragonfly de la NASA doit être lancé en 2028."}, "Hyperion": {"ja": "形が不規則で、自転がカオス的である。", "zh": "形状不规则，自转混乱无序。", "es": "De forma irregular y con una rotación caótica.", "fr": "De forme irrégulière, avec une rotation chaotique."}, "Iapetus": {"ja": "公転方向の前側の半球は黒く、後ろ側は白い、二つの顔をもつ衛星である。", "zh": "公转方向前半球是黑色，后半球是白色，是一颗“双面”卫星。", "es": "Tiene dos caras: su hemisferio delantero es oscuro y el trasero, brillante.", "fr": "Une lune à deux visages : son hémisphère avant est sombre, son hémisphère arrière est clair."}, "Phoebe": {"ja": "逆向きに公転し、土星の巨大な外側のダスト環のもとになっている。", "zh": "反向公转，是土星巨大的外侧尘埃环的来源。", "es": "Orbita en sentido contrario y alimenta el enorme anillo exterior de polvo de Saturno.", "fr": "Elle circule à contre-sens et alimente l'énorme anneau de poussière externe de Saturne."}, "Miranda": {"ja": "高さ約20kmの断崖ヴェローナ・ルペスがある。", "zh": "有高约20公里的悬崖维罗纳断崖。", "es": "Alberga Verona Rupes, un acantilado de unos 20 km de altura.", "fr": "Elle abrite Verona Rupes, une falaise d'environ 20 km de haut."}, "Titania": {"ja": "天王星で最大の衛星である。", "zh": "是天王星最大的卫星。", "es": "La luna más grande de Urano.", "fr": "La plus grande lune d'Uranus."}, "Galatea": {"ja": "アダムズ環をつなぎとめる羊飼い衛星である。", "zh": "是约束亚当斯环的牧羊犬卫星。", "es": "La luna pastora del anillo de Adams.", "fr": "La lune bergère de l'anneau d'Adams."}, "Triton": {"ja": "逆向きに公転する大きな衛星である。ボイジャー2号が窒素の間欠泉を撮影した。", "zh": "反向公转的大型卫星。旅行者2号拍到了氮间歇泉。", "es": "Una luna grande con órbita retrógrada; el Voyager 2 fotografió géiseres de nitrógeno.", "fr": "Une grande lune sur une orbite rétrograde ; Voyager 2 y a photographié des geysers d'azote."}, "Nereid": {"ja": "軌道が非常にゆがんでいる（離心率0.75。ここでは円に単純化）。", "zh": "轨道极扁（偏心率0.75，此处简化为圆形）。", "es": "Órbita muy excéntrica (0,75), simplificada aquí como un círculo.", "fr": "Orbite très excentrique (0,75), simplifiée ici en cercle."}, "Charon": {"ja": "冥王星の直径の半分を超えるため、二つは共通の重心のまわりを回っている。北極に赤い「モルドール斑」がある。", "zh": "直径超过冥王星的一半，因此两者围绕共同的质心运转。北极有红色的“魔多斑”。", "es": "Mide más de la mitad que Plutón, así que ambos orbitan alrededor de un centro de masas común. Su polo norte presenta la «Mordor Macula», de tono rojizo.", "fr": "Plus de la moitié de la taille de Pluton : les deux astres tournent autour d'un centre de masse commun. Son pôle nord porte la « Mordor Macula », rougeâtre."}}, "retro": {"ja": "逆向きに公転する。", "zh": "沿相反方向公转。", "es": "Orbita en sentido contrario (retrógrado).", "fr": "Elle orbite à contre-sens (rétrograde)."}, "nameFr": {"sun": "Soleil", "mercury": "Mercure", "venus": "Vénus", "earth": "Terre", "mars": "Mars", "jupiter": "Jupiter", "saturn": "Saturne", "uranus": "Uranus", "neptune": "Neptune", "pluto": "Pluton", "Moon": "Lune", "Phobos": "Phobos", "Deimos": "Déimos", "Metis": "Métis", "Adrastea": "Adrastée", "Amalthea": "Amalthée", "Thebe": "Thébé", "Io": "Io", "Europa": "Europe", "Ganymede": "Ganymède", "Callisto": "Callisto", "Leda": "Léda", "Himalia": "Himalia", "Lysithea": "Lysithéa", "Elara": "Élara", "Ananke": "Ananké", "Carme": "Carmé", "Pasiphae": "Pasiphaé", "Sinope": "Sinopé", "Pan": "Pan", "Atlas": "Atlas", "Prometheus": "Prométhée", "Pandora": "Pandore", "Epimetheus": "Épiméthée", "Janus": "Janus", "Mimas": "Mimas", "Enceladus": "Encelade", "Tethys": "Téthys", "Dione": "Dioné", "Rhea": "Rhéa", "Titan": "Titan", "Hyperion": "Hypérion", "Iapetus": "Japet", "Phoebe": "Phœbé", "Cordelia": "Cordélia", "Ophelia": "Ophélie", "Bianca": "Bianca", "Cressida": "Cressida", "Desdemona": "Desdémone", "Juliet": "Juliette", "Portia": "Portia", "Rosalind": "Rosalinde", "Cupid": "Cupidon", "Belinda": "Belinda", "Perdita": "Perdita", "Puck": "Puck", "Mab": "Mab", "Miranda": "Miranda", "Ariel": "Ariel", "Umbriel": "Umbriel", "Titania": "Titania", "Oberon": "Obéron", "Caliban": "Caliban", "Sycorax": "Sycorax", "Naiad": "Naïade", "Thalassa": "Thalassa", "Despina": "Despina", "Galatea": "Galatée", "Larissa": "Larissa", "Hippocamp": "Hippocampe", "Proteus": "Protée", "Triton": "Triton", "Nereid": "Néréide", "Charon": "Charon", "Styx": "Styx", "Nix": "Nix", "Kerberos": "Cerbère", "Hydra": "Hydre"}};
+(function(){ const add=(o,id)=>{ if(I18X.notes[id]) Object.assign(o.notes,I18X.notes[id]); o.names[5]=I18X.nameFr[id]||o.names[1]; };
+  add(SUN,'sun'); PLANETS.forEach(p=>add(p,p.id)); Object.assign(RETRO,I18X.retro);
+  MOONS.forEach(m=>{ const en=m[0][1]; m[0][5]=I18X.nameFr[en]||en; const n=m[8]; if(n&&n!==RETRO&&I18X.moonNotes[en]) Object.assign(n,I18X.moonNotes[en]); }); })();
+const nameOf=b=>b.names[LANGS.indexOf(lang)]||b.names[1];
+
+/* ═════════ 장면 ═════════ */
+const canvas=document.getElementById('scene');
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true,logarithmicDepthBuffer:true});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio,MOBILE?1.75:2)); renderer.outputEncoding=THREE.sRGBEncoding;
+const scene=new THREE.Scene();
+const camera=new THREE.PerspectiveCamera(50,1,1e-6,1e8);
+const controls=new THREE.OrbitControls(camera,canvas); controls.enableDamping=true; controls.dampingFactor=0.08; controls.zoomSpeed=1.2;
+scene.add(new THREE.AmbientLight(0x2a3040,0.35));
+scene.add(new THREE.PointLight(0xfff4e6,1.65,0,0));
+const EARTH_SUN={value:new THREE.Vector3(1,0,0)};
+const sphereGeo=MOBILE? new THREE.SphereGeometry(1,80,56) : new THREE.SphereGeometry(1,128,96), smallGeo=new THREE.SphereGeometry(1,32,20);
+function eqToScene(ra,de){ ra*=DEG; de*=DEG; const x=Math.cos(de)*Math.cos(ra),y=Math.cos(de)*Math.sin(ra),z=Math.sin(de);
+  const ye=y*Math.cos(OBL)+z*Math.sin(OBL),ze=-y*Math.sin(OBL)+z*Math.cos(OBL); return new THREE.Vector3(x,ze,-ye).normalize(); }
+function atmoMesh(color){ return new THREE.Mesh(sphereGeo,new THREE.ShaderMaterial({uniforms:{c:{value:new THREE.Color(color)}},
+  // 가장자리가 얇게 빛나되, 태양을 향한 쪽만 밝게(밤쪽은 거의 안 보이게)
+  vertexShader:'#include <common>\n#include <logdepthbuf_pars_vertex>\nvarying vec3 vN; varying vec3 vV; varying float vLit;\nvoid main(){ vec4 mv=modelViewMatrix*vec4(position,1.0); vN=normalize(normalMatrix*normal); vV=normalize(-mv.xyz);\n vec3 wN=normalize(mat3(modelMatrix)*normal); vec3 wP=(modelMatrix*vec4(position,1.0)).xyz; vLit=dot(wN,normalize(-wP));\n gl_Position=projectionMatrix*mv;\n#include <logdepthbuf_vertex>\n}',
+  fragmentShader:'#include <logdepthbuf_pars_fragment>\nuniform vec3 c; varying vec3 vN; varying vec3 vV; varying float vLit;\nvoid main(){\n#include <logdepthbuf_fragment>\n float f=pow(1.0-max(dot(vN,vV),0.0),4.0); float lit=smoothstep(-0.35,0.45,vLit); gl_FragColor=vec4(c,f*0.75*lit); }',
+  transparent:true,blending:THREE.AdditiveBlending,depthWrite:false})); }
+function kepler(el,days){ const [a,e,,L0,wbar,,Ld]=el,T=days/36525; let M=((L0+Ld*T-wbar)%360+540)%360-180; M*=DEG;
+  let E=M+e*Math.sin(M); for(let k=0;k<8;k++) E-=(E-e*Math.sin(E)-M)/(1-e*Math.cos(E)); return orbitPoint(el,E); }
+function orbitPoint(el,E){ const [a,e,I,,wbar,O]=el,w=(wbar-O)*DEG,Om=O*DEG,i=I*DEG,xp=a*(Math.cos(E)-e),yp=a*Math.sqrt(1-e*e)*Math.sin(E);
+  const cw=Math.cos(w),sw=Math.sin(w),cO=Math.cos(Om),sO=Math.sin(Om),ci=Math.cos(i),si=Math.sin(i);
+  return [(cw*cO-sw*sO*ci)*xp+(-sw*cO-cw*sO*ci)*yp,(cw*sO+sw*cO*ci)*xp+(-sw*sO+cw*cO*ci)*yp,(sw*si)*xp+(cw*si)*yp]; }
+function mapAU(p){ const r=Math.hypot(p[0],p[1],p[2]),k=r>0? D.dist(r)/r:0; return [p[0]*k,p[2]*k,-p[1]*k]; }
+
+/* ═════════ 둥근 미리보기 그림(아래 목록·카드용) ═════════ */
+function thumb(b,size){
+  const s=size*2,cv=document.createElement('canvas'); cv.width=cv.height=s; const c=cv.getContext('2d');
+  const hasRing=b.id==='saturn', src=b.mesh.material.map.image, R=s*(hasRing?0.3:0.42), cx=s/2, cy=s/2;
+  const ring=(front)=>{ c.save(); c.translate(cx,cy); c.rotate(-0.35); c.scale(1,0.32);
+    c.beginPath(); c.arc(0,0,R*1.95,front?0:Math.PI,front?Math.PI:TAU); c.lineWidth=R*0.55; c.strokeStyle=b.id==='saturn'?'rgba(214,196,158,.85)':'rgba(140,140,150,.35)'; c.stroke(); c.restore(); };
+  if(hasRing) ring(false);
+  if(b.isSun){ const g=c.createRadialGradient(cx,cy,R*0.6,cx,cy,s/2); g.addColorStop(0,'rgba(255,190,100,.55)'); g.addColorStop(1,'rgba(255,150,60,0)'); c.fillStyle=g; c.fillRect(0,0,s,s); }
+  c.save(); c.beginPath(); c.arc(cx,cy,R,0,TAU); c.clip();
+  c.drawImage(src,src.width*0.25,0,src.width*0.5,src.height,cx-R,cy-R,R*2,R*2);
+  if(b.clouds&&b.clouds.material.map){ const ci=b.clouds.material.map.image; c.globalAlpha=0.8; c.drawImage(ci,ci.width*0.25,0,ci.width*0.5,ci.height,cx-R,cy-R,R*2,R*2); c.globalAlpha=1; }
+  if(!b.isSun){ const g=c.createRadialGradient(cx-R*0.45,cy-R*0.45,R*0.1,cx,cy,R*1.05); g.addColorStop(0,'rgba(255,255,255,.12)'); g.addColorStop(0.55,'rgba(0,0,0,0)'); g.addColorStop(1,'rgba(0,0,0,.72)'); c.fillStyle=g; c.fillRect(0,0,s,s); }
+  c.restore(); if(hasRing) ring(true);
+  return cv.toDataURL();
+}
+
+/* ═════════ 천체 만들기 ═════════ */
+const bodies=[],pickables=[]; let sun,belts,stars;
+function makeLabel(b,cls){
+  const el=document.createElement('div'); el.className='lbl '+cls; el.tabIndex=0; el.setAttribute('role','button');
+  el.style.setProperty('--c',b.color||'#9aa6bd'); el.innerHTML='<i></i><span></span>';
+  el.addEventListener('click',e=>{ e.stopPropagation(); focusOn(b); });
+  el.addEventListener('keydown',e=>{ if(e.key==='Enter') focusOn(b); });
+  el.addEventListener('pointerenter',()=>setHover(b)); el.addEventListener('pointerleave',()=>setHover(null));
+  document.getElementById('labels').appendChild(el); b.label=el;
+}
+function buildSun(){
+  const b={...SUN,isSun:true,group:new THREE.Group(),pole:new THREE.Group()};
+  b.pole.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),eqToScene(...SUN.pole)); scene.add(b.group); b.group.add(b.pole);
+  b.mesh=new THREE.Mesh(sphereGeo,new THREE.MeshBasicMaterial({map:genTex(512,256,2,PAINT.sun)})); b.pole.add(b.mesh);
+  const cv=document.createElement('canvas'); cv.width=cv.height=256; const c=cv.getContext('2d'),g=c.createRadialGradient(128,128,0,128,128,128);
+  g.addColorStop(0,'rgba(255,236,190,1)'); g.addColorStop(0.18,'rgba(255,196,110,.55)'); g.addColorStop(0.45,'rgba(255,150,60,.12)'); g.addColorStop(1,'rgba(255,120,40,0)'); c.fillStyle=g; c.fillRect(0,0,256,256);
+  const gt=new THREE.CanvasTexture(cv); gt.encoding=THREE.sRGBEncoding;
+  b.glow=new THREE.Sprite(new THREE.SpriteMaterial({map:gt,blending:THREE.AdditiveBlending,depthWrite:false,transparent:true})); b.group.add(b.glow);
+  b.mesh.userData.body=b; pickables.push(b.mesh); makeLabel(b,''); bodies.push(b); return b;
+}
+function buildPlanet(def){
+  const b={...def,group:new THREE.Group(),pole:new THREE.Group(),moons:[]};
+  b.pole.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),eqToScene(...def.pole)); scene.add(b.group); b.group.add(b.pole);
+  let mat;
+  if(def.look==='earth'){ const tx=HAS_PHOTOS? earthPlaceholder() : earthTextures(); mat=new THREE.MeshPhongMaterial({map:tx.base,specular:0x000000,shininess:22,emissive:0x000000});
+    // 밤쪽에서만 도시 불빛(emissiveMap)이 보이도록
+    mat.onBeforeCompile=sh=>{ sh.uniforms.sunView=EARTH_SUN; sh.fragmentShader='uniform vec3 sunView;\n'+sh.fragmentShader.replace('#include <emissivemap_fragment>','#include <emissivemap_fragment>\n totalEmissiveRadiance*=smoothstep(0.08,-0.22,dot(normal,sunView));'); };
+    b.earthMat=mat;
+    b.clouds=new THREE.Mesh(sphereGeo,new THREE.MeshStandardMaterial({map:tx.clouds,transparent:true,depthWrite:false,roughness:1})); b.pole.add(b.clouds); }
+  else { const big=def.look==='jupiter'||def.look==='saturn'; mat=new THREE.MeshStandardMaterial({map:genTex(big?1024:512,big?512:256,def.id.length*13,PAINT[def.look]),roughness:1,metalness:0}); }
+  b.mesh=new THREE.Mesh(sphereGeo,mat); b.pole.add(b.mesh);
+  if(def.atmo){ b.atmo=atmoMesh(def.atmo); b.pole.add(b.atmo); }
+  if(def.rings){ const r=def.rings,ri=r.inner/def.R,ro=r.outer/def.R,geo=new THREE.RingGeometry(ri,ro,256,1),pos=geo.attributes.position,uv=geo.attributes.uv;
+    for(let i=0;i<pos.count;i++) uv.setXY(i,(Math.hypot(pos.getX(i),pos.getY(i))-ri)/(ro-ri),0.5);
+    b.ring=new THREE.Mesh(geo,new THREE.MeshLambertMaterial({map:ringTexture(r.segs,r.inner,r.outer,r.seed,r.color),transparent:true,side:THREE.DoubleSide,depthWrite:false}));
+    b.ring.rotation.x=-Math.PI/2; b.pole.add(b.ring); }
+  b.orbitAU=[]; for(let k=0;k<=512;k++) b.orbitAU.push(orbitPoint(def.el,k/512*TAU));
+  b.orbit=new THREE.Line(new THREE.BufferGeometry(),new THREE.LineBasicMaterial({color:def.color,transparent:true,opacity:0.3}));
+  b.orbit.geometry.setAttribute('position',new THREE.Float32BufferAttribute(new Float32Array(b.orbitAU.length*3),3)); scene.add(b.orbit);
+  b.mesh.userData.body=b; pickables.push(b.mesh); makeLabel(b,''); bodies.push(b); return b;
+}
+function seedOf(s){ let h=0; for(const ch of s) h=(h*31+ch.charCodeAt(0))|0; return Math.abs(h); }
+function buildMoon(m,planet){
+  const [names,,R,a,P,inc,frame,look,note]=m, sd=seedOf(names[1]);
+  const b={id:'m_'+names[1],names,R,a,P,inc,frame,note,parent:planet,isMoon:true,color:'#9aa6bd',orbitFrame:new THREE.Group(),pivot:new THREE.Group()};
+  b.orbitFrame.add(b.pivot); b.node=(sd%360)*DEG; b.L0=((sd>>3)%360)*DEG; b.lunar=names[1]==='Moon';
+  b.orbitFrame.rotation.order='YXZ'; b.orbitFrame.rotation.set(inc*DEG,b.node,0); (frame==='eq'? planet.pole:planet.group).add(b.orbitFrame);
+  const big=R>500, tex=typeof look==='string'? genTex(big?512:256,big?256:128,sd,PAINT[look]) : genTex(128,64,sd,PAINT.rock(look[0],look[1]));
+  b.mesh=new THREE.Mesh(big?sphereGeo:smallGeo,new THREE.MeshStandardMaterial({map:tex,roughness:1,metalness:0})); b.mesh.rotation.y=Math.PI;
+  if(R<200){ const s=sd%7; b.squash=[1,0.72+0.04*s,0.85]; }
+  b.pivot.add(b.mesh); if(names[1]==='Titan'){ b.atmo=atmoMesh('#e0a050'); b.pivot.add(b.atmo); }
+  const circ=[]; for(let k=0;k<=128;k++){ const q=k/128*TAU; circ.push(Math.cos(q),0,-Math.sin(q)); }
+  const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.Float32BufferAttribute(circ,3));
+  b.orbit=new THREE.Line(g,new THREE.LineBasicMaterial({color:P<0?'#c98a8a':'#8fa6c8',transparent:true,opacity:0.26})); b.orbitFrame.add(b.orbit);
+  b.mesh.userData.body=b; pickables.push(b.mesh); makeLabel(b,'moon'); planet.moons.push(b); bodies.push(b);
+}
+const rnd=Math.random, gauss=()=>(rnd()+rnd()+rnd()-1.5)/1.5;
+function makeBelt(n,gen,color,size){ const data=new Float32Array(n*3); let k=0; while(k<n){ const s=gen(); if(!s) continue; data.set(s,k*3); k++; }
+  const geo=new THREE.BufferGeometry(); geo.setAttribute('position',new THREE.Float32BufferAttribute(new Float32Array(n*3),3));
+  const p=new THREE.Points(geo,new THREE.PointsMaterial({color,size,sizeAttenuation:false,transparent:true,opacity:0.65,depthWrite:false})); p.userData.au=data; scene.add(p); return p; }
+function buildBelts(){ const gaps=[2.502,2.825,2.958,3.279];
+  belts={ast:makeBelt(MOBILE?2500:5000,()=>{ const r=2.06+rnd()*1.24; for(const g of gaps) if(Math.abs(r-g)<0.03) return null; if(rnd()<0.3&&r>3.1) return null; return [r,rnd()*TAU,gauss()*0.17]; },'#a39684',1.4),
+   tro:makeBelt(MOBILE?800:1600,()=>{ const sd=rnd()<0.5?1:-1; return [5.2+gauss()*0.25,sd*60*DEG+gauss()*22*DEG,gauss()*0.3]; },'#b8a48a',1.4),
+   kui:makeBelt(MOBILE?3500:7000,()=>{ const u=rnd(); const r=u<0.18? 39.4+gauss()*0.6 : u<0.75? 42+rnd()*5.5 : 30+rnd()*25; return [r,rnd()*TAU,gauss()*0.28]; },'#7f8aa3',1.3)}; }
+function layoutBelts(){ for(const p of Object.values(belts)){ const au=p.userData.au,arr=p.geometry.attributes.position.array;
+  for(let i=0;i<au.length/3;i++){ const d=D.dist(au[i*3]),th=au[i*3+1]; arr[i*3]=Math.cos(th)*d; arr[i*3+2]=-Math.sin(th)*d; arr[i*3+1]=au[i*3+2]*d*0.25; }
+  p.geometry.attributes.position.needsUpdate=true; p.geometry.computeBoundingSphere(); } }
+function buildStars(){ const n=MOBILE?6000:9000,pos=new Float32Array(n*3),col=new Float32Array(n*3),gp=eqToScene(192.86,27.13),v3=new THREE.Vector3(),u=new THREE.Vector3(1,0,0).cross(gp).normalize(),v=gp.clone().cross(u);
+  for(let i=0;i<n;i++){ if(i<n*0.45){ const q=rnd()*TAU; v3.copy(u).multiplyScalar(Math.cos(q)).addScaledVector(v,Math.sin(q)).addScaledVector(gp,gauss()*0.18).normalize(); } else v3.set(gauss(),gauss(),gauss()).normalize();
+    pos.set([v3.x,v3.y,v3.z],i*3); const q=rnd(),br=0.35+Math.pow(rnd(),3)*0.65,c=q<0.15?[0.75,0.82,1]:q<0.7?[1,0.98,0.94]:q<0.9?[1,0.88,0.72]:[1,0.75,0.6]; col.set([c[0]*br,c[1]*br,c[2]*br],i*3); }
+  const g=new THREE.BufferGeometry(); g.setAttribute('position',new THREE.BufferAttribute(pos,3)); g.setAttribute('color',new THREE.BufferAttribute(col,3));
+  stars=new THREE.Points(g,new THREE.PointsMaterial({size:1.6,sizeAttenuation:false,vertexColors:true,depthWrite:false,transparent:true})); stars.frustumCulled=false; scene.add(stars); }
+
+function layout(){
+  const sr=D.sunRad(); sun.mesh.scale.setScalar(sr); sun.glow.scale.setScalar(sr*9); sun.dispR=sr;
+  for(const b of bodies){ if(b.isSun||b.isMoon) continue;
+    const r=D.rad(b.R); b.dispR=r; b.mesh.scale.setScalar(r); if(b.clouds) b.clouds.scale.setScalar(r*1.006); if(b.atmo) b.atmo.scale.setScalar(r*(b.id==='earth'?1.02:1.03)); if(b.ring) b.ring.scale.setScalar(r);
+    const arr=b.orbit.geometry.attributes.position.array; b.orbitAU.forEach((p,k)=>{ arr.set(mapAU(p),k*3); });
+    b.orbit.geometry.attributes.position.needsUpdate=true; b.orbit.geometry.computeBoundingSphere();
+    for(const m of b.moons){ const rr=D.rad(m.R),sq=m.squash||[1,1,1]; m.dispR=rr; m.mesh.scale.set(rr*sq[0],rr*sq[1],rr*sq[2]);
+      const d=r*D.moonD(m.a/b.R); m.mesh.position.set(d,0,0); if(m.atmo){ m.atmo.position.set(d,0,0); m.atmo.scale.setScalar(rr*1.08); } m.orbit.scale.setScalar(d); } }
+  layoutBelts(); controls.maxDistance=(state.mode==='real'?9000:140)*6; stars.scale.setScalar(state.mode==='real'?1e6:2e4);
+}
+const _v=new THREE.Vector3(),_q=new THREE.Quaternion();
+let jupiter;
+function update(){
+  for(const b of bodies){
+    if(b.isSun){ b.mesh.rotation.y=TAU*((rotDays*24/b.rot)%1); continue; }
+    if(b.isMoon){ let ang; if(b.lunar){ const Om=(125.08-0.0529538*orbitDays)*DEG; b.orbitFrame.rotation.y=Om; ang=(218.316+13.176396*orbitDays)*DEG-Om; } else ang=b.L0+TAU*(orbitDays/b.P%1); b.pivot.rotation.y=ang; continue; }
+    const p=mapAU(kepler(b.el,orbitDays)); b.group.position.set(p[0],p[1],p[2]);
+    if(b.id==='earth'){ _v.copy(b.group.position).negate().applyQuaternion(_q.copy(b.pole.quaternion).invert());
+      b.mesh.rotation.y=Math.atan2(-_v.z,_v.x)+(((rotDays%1)+1)%1)*TAU; b.clouds.rotation.y=b.mesh.rotation.y+rotDays*0.35;
+      EARTH_SUN.value.copy(b.group.position).negate().normalize().transformDirection(camera.matrixWorldInverse); }
+    else b.mesh.rotation.y=TAU*((rotDays*24/b.rot)%1);
+  }
+  belts.tro.rotation.y=Math.atan2(-jupiter.group.position.z,jupiter.group.position.x);
+  belts.ast.rotation.y=TAU*(orbitDays/1680%1); belts.kui.rotation.y=TAU*(orbitDays/(365.25*270)%1);
+}
+
+/* ═════════ 카메라 이동·따라가기 ═════════ */
+let flight=null; const lastTarget=new THREE.Vector3();
+const worldPos=(b,o)=>b.mesh.getWorldPosition(o);
+const fitK=()=> camera.aspect<1? Math.pow(1/camera.aspect,0.85) : 1; // 세로로 긴 화면은 가로가 좁으니 조금 더 물러선다
+const koreaDist=()=>earthB.dispR*(1+0.55*Math.sqrt(fitK())); // 지표 위 약 0.55~0.75 반지름: 한반도와 주변이 화면을 채움
+const homeDist=()=> (state.mode==='real'?2400:80)*(camera.aspect<1? Math.pow(1/camera.aspect,0.6):1);
+function viewDist(b){ const r=b.dispR||1; return (b.isSun? r*7 : b.isMoon? r*8 : b.ring? r*9 : r*6)*fitK(); }
+function focusOn(b){
+  state.focus=b; const dir=camera.position.clone().sub(controls.target); if(dir.lengthSq()<1e-12) dir.set(0,0.4,1); dir.normalize();
+  if(!b.isMoon&&!b.isSun){ dir.y=Math.max(dir.y,0.25); dir.normalize(); }
+  if(b.ring){ const pole=new THREE.Vector3(0,1,0).applyQuaternion(b.pole.quaternion); if(pole.dot(dir)<0) pole.negate(); dir.addScaledVector(pole,0.7).normalize(); }
+  flight={t:0,fromT:controls.target.clone(),fromC:camera.position.clone(),dir,dist:viewDist(b)};
+  controls.minDistance=(b.dispR||0.01)*1.15; $('bday').hidden=true; showInfo(b); markPicker(); hideToast(); closeSettings();
+}
+function overview(){
+  state.focus=null; controls.minDistance=state.mode==='real'?0.001:0.5;
+  flight={t:0,fromT:controls.target.clone(),fromC:camera.position.clone(),dir:new THREE.Vector3(0,0.55,1).normalize(),dist:homeDist(),toOrigin:true};
+  $('info').hidden=true; markPicker();
+}
+/* ═════════ 첫 화면 연출: 지구에서 시작해 태양계 전체로 멀어진다 ═════════ */
+let introTimers=[],introOn=false,earthB;
+function introLine(i){ const el=$('introLine'); el.classList.remove('show'); setTimeout(()=>{ el.textContent= i<0? '' : t('intro')[i]; if(i>=0) el.classList.add('show'); },i===0?50:450); el.dataset.i=i; }
+function flyFollow(b,dist,dur,lift){ const dir=camera.position.clone().sub(controls.target).normalize(); dir.y+=lift; dir.normalize();
+  state.focus=b; flight={t:0,dur,fromT:controls.target.clone(),fromC:camera.position.clone(),dir,dist}; }
+function flyHome(dur){ state.focus=null; flight={t:0,dur,fromT:controls.target.clone(),fromC:camera.position.clone(),dir:new THREE.Vector3(0,0.55,1).normalize(),dist:homeDist(),toOrigin:true}; }
+function runIntro(){
+  introOn=true; document.body.classList.add('intro'); $('intro').hidden=false; controls.enabled=false;
+  state.speed=1/1440; syncSpeed(); // 첫 화면은 1초에 1분: 한반도가 화면에서 벗어나지 않게
+  const ep=worldPos(earthB,new THREE.Vector3()), sunDir=ep.clone().negate().normalize(), up=new THREE.Vector3(0,1,0), side=sunDir.clone().cross(up).normalize();
+  // 한반도 중심이 카메라를 향하도록: 지구 표면 위 한반도 방향을 세계 좌표로 구한다
+  scene.updateMatrixWorld(true);
+  const la=36.5*DEG, lo=127.8*DEG, kr=new THREE.Vector3(Math.cos(la)*Math.cos(lo),Math.sin(la),-Math.cos(la)*Math.sin(lo)).transformDirection(earthB.mesh.matrixWorld);
+  // 한반도가 밤이면 낮·밤 경계 쪽으로 조금 돌려 노을진 지구가 함께 보이게
+  const night=Math.max(0,-kr.dot(sunDir)); const dir=kr.addScaledVector(sunDir,night*0.55).addScaledVector(up,0.1).normalize();
+  state.focus=earthB; controls.target.copy(ep); lastTarget.copy(ep); camera.position.copy(ep).addScaledVector(dir,koreaDist()); flight=null;
+  if(matchMedia('(prefers-reduced-motion: reduce)').matches){ flyHome(0.01); endIntro(); return; }
+  const at=(ms,f)=>introTimers.push(setTimeout(f,ms));
+  introLine(0);
+  at(2520,()=>{ introLine(1); flyFollow(earthB,earthB.moons[0].mesh.position.x*2.2*fitK(),4.14,0.25); });
+  at(6840,()=>{ introLine(2); flyFollow(earthB,34*fitK(),4.05,0.35); });
+  at(11340,()=>{ introLine(3); flyHome(4.05); });
+  at(14850,endIntro);
+}
+function endIntro(){ introTimers.forEach(clearTimeout); introTimers=[]; introLine(-1); $('skipBtn').hidden=true; $('introEnd').hidden=false; if(!flight&&state.focus) flyHome(1.6); }
+function skipIntro(){ introTimers.forEach(clearTimeout); introTimers=[]; flyHome(1.6); endIntro(); }
+function finishIntro(){ introOn=false; $('intro').hidden=true; document.body.classList.remove('intro'); controls.enabled=true;
+  state.speed=DEFAULT_SPEED; $('speed').value=sliderFromSpeed(DEFAULT_SPEED); syncSpeed(); toastTimer=setTimeout(hideToast,9000); }
+function bindIntroBday(){
+$('skipBtn').onclick=skipIntro;
+$('startBtn').onclick=finishIntro;
+$('introTour').onclick=()=>{ finishIntro(); hideToast(); startTour(); };
+$('tourBtn').onclick=()=>startTour();
+$('tourSkip').onclick=()=>skipTour();
+$('tourBack').onclick=()=>endTour();
+$('tourAgain').onclick=()=>startTour();
+$('tourBday').onclick=async()=>{ await endTour(); hideToast(); openBday(); };
+$('introBday').onclick=()=>{ finishIntro(); hideToast(); openBday(); };
+$('introHist').onclick=()=>{ finishIntro(); hideToast(); if(window.HIST) HIST.open(0); };
+$('introVoy').onclick=()=>{ finishIntro(); hideToast(); if(window.HIST) HIST.open(HIST_DATA.eras.findIndex(e=>e.id==='voyager')); };
+$('voyBtn').onclick=()=>{ hideToast(); if(window.HIST) HIST.open(HIST_DATA.eras.findIndex(e=>e.id==='voyager')); };
+$('histBtn').onclick=()=>{ if(!window.HIST) return; if(HIST.active) HIST.close(); else { hideToast(); HIST.open(0); } };
+
+/* ═════════ 내 생일의 하늘 ═════════ */
+let bdayDays=null;
+function bdaySubmit(e){ e.preventDefault(); const v=$('bdayDate').value, ms=v? Date.parse(v+'T12:00:00Z') : NaN;
+  if(isNaN(ms)||ms<Date.UTC(1900,0,1)||ms>Date.now()){ $('bdayErr').hidden=false; return; }
+  $('bdayErr').hidden=true; bdayDays=(ms-J2000)/864e5; orbitDays=rotDays=bdayDays; state.target=null;
+  state.paused=true; syncPlay(); if(state.focus) overview(); else flyHome(1.4); renderBday(); }
+const todayISO=()=>new Date().toISOString().slice(0,10);
+function openBday(){ closeSettings(); $('info').hidden=true; $('bday').hidden=false; $('bdayDate').max=todayISO(); if(!$('bdayDate').value) setTimeout(()=>$('bdayDate').focus(),50); }
+function dateStr(ms){ return new Date(ms).toLocaleDateString(LOCALE[lang],{year:'numeric',month:'short',day:'numeric',timeZone:'UTC'}); }
+function renderBday(){
+  if(bdayDays==null) return; const ms=J2000+bdayDays*864e5, now=(Date.now()-J2000)/864e5, el=now-bdayDays;
+  $('bdayHint').textContent=t('bdayHint',{d:dateStr(ms)});
+  const rows=[...PLANETS.map(p=>bodies.find(b=>b.id===p.id))].map(b=>{ const P=360/b.el[6]*36525, age=el/P, next=ms+(Math.floor(age)+1)*P*864e5;
+    return '<div class="age"><img alt="" src="'+b.thumb+'"><div class="n">'+nameOf(b)+'<small>'+t('next',{d:dateStr(next)})+'</small></div><div class="v">'+t('age',{n:fmt(age,age<10?2:1)})+'</div></div>'; });
+  $('ages').innerHTML=rows.join('');
+  $('traveled').textContent=t('traveled',{n:t('bigKm')(el*2.5734e6)});
+  $('bdayResult').hidden=false;
+}
+$('bdayForm').addEventListener('submit',bdaySubmit);
+$('replayBtn').onclick=()=>{ if(bdayDays==null) return; const now=(Date.now()-J2000)/864e5; orbitDays=rotDays=bdayDays;
+  state.target=now; state.dir=1; $('revBtn').classList.remove('on'); state.speed=Math.max(1,(now-bdayDays)/14); $('speed').value=sliderFromSpeed(state.speed); syncSpeed();
+  state.paused=false; syncPlay(); };
+$('bdayBtn').onclick=()=>{ $('bday').hidden? openBday() : ($('bday').hidden=true); };
+$('bClose').onclick=()=>{ $('bday').hidden=true; };
+}
+
+const ease=x=>x<.5? 4*x*x*x : 1-Math.pow(-2*x+2,3)/2;
+function stepCamera(dt){
+  const tgt=state.focus? worldPos(state.focus,new THREE.Vector3()) : new THREE.Vector3();
+  if(flight){ flight.t=Math.min(1,flight.t+dt/(flight.dur||1.5)); const e=ease(flight.t),to=flight.toOrigin? new THREE.Vector3():tgt;
+    controls.target.lerpVectors(flight.fromT,to,e);
+    const a=flight.fromC.clone().sub(flight.fromT),la=Math.log(Math.max(a.length(),1e-9)),lb=Math.log(flight.dist);
+    camera.position.copy(controls.target).addScaledVector(a.normalize().lerp(flight.dir,e).normalize(),Math.exp(la+(lb-la)*e));
+    if(flight.t>=1) flight=null; lastTarget.copy(to); }
+  else if(state.focus){ const delta=tgt.clone().sub(lastTarget); camera.position.add(delta); controls.target.add(delta); lastTarget.copy(tgt); }
+}
+
+/* ═════════ 이름표 ═════════ */
+const _p=new THREE.Vector3(),_pp=new THREE.Vector3(),_w=new THREE.Vector3();
+let hovered=null;
+function setHover(b){ hovered=b; canvas.classList.toggle('hover',!!b); }
+function updateLabels(){
+  const w=canvas.clientWidth,h=canvas.clientHeight,f=h/(2*Math.tan(camera.fov*DEG/2));
+  for(const b of bodies){
+    const el=b.label; let show=state.showLabels;
+    if(b.isMoon) show=show&&state.showMoons&&state.focus&&(state.focus===b.parent||state.focus.parent===b.parent);
+    if(show&&!known(b)) show=false;
+    let pr=0;
+    if(show){ worldPos(b,_w); _p.copy(_w).project(camera);
+      if(_p.z>1||_p.z<-1) show=false;
+      else { pr=(b.dispR||0)*f/Math.max(1e-12,_w.distanceTo(camera.position));
+        if(b.isMoon){ worldPos(b.parent,_pp); _pp.project(camera); const dx=(_p.x-_pp.x)*w/2,dy=(_p.y-_pp.y)*h/2; if(dx*dx+dy*dy<26*26) show=false; } } }
+    if(!show){ if(el.style.display!=='none') el.style.display='none'; continue; }
+    if(el.style.display==='none') el.style.display='';
+    const big=pr>6, mk=b.isMoon?3:4.5, x=(_p.x*0.5+0.5)*w+(big?pr*0.72:0)-mk, y=(-_p.y*0.5+0.5)*h+(big?-pr*0.72:0);
+    el.style.transform='translate('+x.toFixed(1)+'px,'+y.toFixed(1)+'px) translateY(-50%)';
+    el.classList.toggle('big',big); el.classList.toggle('on',state.focus===b); el.classList.toggle('hover',hovered===b);
+  }
+}
+function relabel(){ for(const b of bodies) b.label.querySelector('span').textContent=nameOf(b); }
+
+/* ═════════ 정보 카드 ═════════ */
+const $=id=>document.getElementById(id);
+function periodText(days){ const a=Math.abs(days); let s; if(a<2) s=fmt(a*24,1)+t('h'); else if(a<800) s=fmt(a,a<20?2:1)+t('d'); else s=fmt(a/365.25,2)+t('y'); return s+(days<0?' ('+t('retro')+')':''); }
+function ratio(n){ return fmt(n,n<0.1?3:n<10?2:n<100?1:0); }
+function tile(k,v,s){ return '<div class="tile"><div class="k">'+k+'</div><div class="v">'+v+'</div>'+(s?'<div class="s">'+s+'</div>':'')+'</div>'; }
+function showInfo(b){
+  const box=$('info'); box.hidden=false; box.style.animation='none'; void box.offsetWidth; box.style.animation='';
+  $('iThumb').src=b.thumb||''; $('iName').textContent=nameOf(b); $('iAlt').textContent= lang==='en'? '' : b.names[1];
+  $('iKind').textContent= b.isMoon? t('kinds').moonOf.replace('{p}',nameOf(b.parent)) : t('kinds')[b.kind];
+  let tiles='',stats=[],notes;
+  if(b.isMoon){
+    const moonR=1737.4;
+    tiles+=tile(t('diameter'),fmt(b.R*2)+' '+t('km'),b.names[1]==='Moon'?'':t('xMoon',{n:ratio(b.R/moonR)}));
+    tiles+=tile(t('orbitP'),periodText(b.P));
+    tiles+=tile(t('distParent'),fmt(b.a)+' '+t('km'),t('xRadius',{n:fmt(b.a/b.parent.R,1)}));
+    tiles+=tile(t('inc'),fmt(b.inc,1)+'°',b.frame==='eq'?t('eqRef'):t('eclRef'));
+    notes=b.note? [b.note[lang]||b.note.en] : []; if(b.R<200) notes.push(t('smallMoon'));
+  } else {
+    tiles+=tile(t('diameter'),fmt(b.R*2)+' '+t('km'),b.id==='earth'?'':t('xEarth',{n:ratio(b.R/6371)}));
+    tiles+=tile(t('gravity'),fmt(b.g,2)+' m/s²',b.id==='earth'?'':t('xEarth',{n:ratio(b.g/9.81)}));
+    tiles+=tile(t('day'),periodText(b.rot/24));
+    tiles+= b.isSun? tile(t('surfTemp'),fmt(b.temp)+' °C') : tile(t('year'),periodText(360/b.el[6]*36525));
+    if(!b.isSun) tiles+=tile(t('temp'),fmt(b.temp)+' °C');
+    if(!b.isSun) stats.push([t('meanDist'),fmt(b.el[0],3)+' AU'],[t('nowDist'),'<span id="liveDist">—</span>'],[t('ecc'),fmt(b.el[1],3)]);
+    stats.push([t('tilt'),fmt(b.tilt,2)+'°']);
+    if(!b.isSun) stats.push([t('known'),t('count',{n:b.moonCount})+(b.moons.length&&b.moons.length<b.moonCount?' · '+t('shown',{n:b.moons.length}):'')]);
+    notes=b.notes[lang]||b.notes.en;
+  }
+  $('iTiles').innerHTML=tiles;
+  const dl=$('iStats'); dl.innerHTML=''; dl.hidden=!stats.length; for(const [k,v] of stats){ const dt=document.createElement('dt'); dt.textContent=k; const dd=document.createElement('dd'); dd.innerHTML=v; dl.append(dt,dd); }
+  // 크기 비교
+  const ref= b.isMoon? bodies.find(x=>x.lunar) : bodies.find(x=>x.id==='earth');
+  $('iCmp').hidden= b===ref; $('iCmpT').textContent= b.isMoon? t('cmpMoon') : t('cmpEarth');
+  if(b!==ref){ const big=Math.max(b.R,ref.R),max=b.isSun?130:96, sz=r=>Math.max(3,Math.round(max*r/big));
+    const fig=(x)=>'<figure><img src="'+x.thumb+'" width="'+sz(x.R)+'" height="'+sz(x.R)+'" alt=""><figcaption>'+nameOf(x)+'</figcaption></figure>';
+    $('iCmpRow').innerHTML=fig(b)+fig(ref); }
+  const ul=$('iNotes'); ul.innerHTML=''; notes.forEach(n=>{ const li=document.createElement('li'); li.textContent=n; ul.append(li); });
+  $('iFallback').hidden=true;
+  const host=b.isMoon? b.parent:b, chips=$('iMoons'); chips.innerHTML='';
+  $('iMoonsWrap').hidden=!(host.moons&&host.moons.length);
+  if(host.moons&&host.moons.length){ $('iMoonsT').textContent=t('moonsOf',{p:nameOf(host)});
+    host.moons.forEach(m=>{ const c=document.createElement('button'); c.type='button'; c.className='chip'+(m===b?' on':''); c.textContent=nameOf(m); c.onclick=()=>focusOn(m); chips.append(c); }); }
+  const pb=$('parentBtn'); pb.hidden=!b.isMoon; if(b.isMoon){ pb.textContent=t('toParent',{p:nameOf(b.parent)}); pb.onclick=()=>focusOn(b.parent); }
+  liveInfo();
+}
+function liveInfo(){ const el=$('liveDist'); if(!el||!state.focus||state.focus.isMoon||state.focus.isSun) return;
+  const r=Math.hypot(...kepler(state.focus.el,orbitDays)); el.textContent=fmt(r,3)+' AU · '+fmt(r*149.5978707,1)+' '+t('mkm'); }
+
+/* ═════════ 아래: 천체 고르기 · 시간 막대 ═════════ */
+function buildPicker(){
+  const nav=$('picker'); nav.innerHTML='';
+  const all=document.createElement('button'); all.type='button'; all.className='pick all'; all.dataset.id='all';
+  all.innerHTML='<span class="allicon"><svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="3"/><ellipse cx="16" cy="16" rx="8" ry="8"/><ellipse cx="16" cy="16" rx="13" ry="13"/></svg></span><span></span>';
+  all.onclick=overview; nav.append(all);
+  [sun,...bodies.filter(b=>!b.isSun&&!b.isMoon)].forEach((b,i)=>{ const x=document.createElement('button'); x.type='button'; x.className='pick'; x.dataset.id=b.id;
+    x.innerHTML='<img alt="" src="'+b.thumb+'"><span></span>'; x.onclick=()=>focusOn(b); nav.append(x); });
+  repickNames(); markPicker();
+}
+function repickNames(){ document.querySelectorAll('#picker .pick').forEach(x=>{ const id=x.dataset.id; x.querySelector('span:last-child').textContent= id==='all'? t('all') : nameOf(bodies.find(b=>b.id===id)); }); }
+function markPicker(){ const id=state.focus? (state.focus.isMoon? state.focus.parent.id : state.focus.id) : 'all';
+  document.querySelectorAll('#picker .pick').forEach(x=>x.classList.toggle('on',x.dataset.id===id)); }
+
+const PRESETS=[1/86400,1/24,1,30.44,365.25];
+function buildPresets(){ const p=$('presets'); p.innerHTML='';
+  PRESETS.forEach((d,i)=>{ const x=document.createElement('button'); x.type='button'; x.className='spd'; x.textContent=t('presets')[i];
+    x.onclick=()=>{ state.speed=d; $('speed').value=sliderFromSpeed(d); syncSpeed(); if(state.paused) togglePause(); }; p.append(x); }); syncSpeed(); }
+const speedFromSlider=v=>Math.pow(10,-5+v/1000*7.6), sliderFromSpeed=d=>Math.round((Math.log10(d)+5)/7.6*1000);
+function speedText(d){ const s=d*86400,u=t('units'),F=t('speedFmt');
+  if(s<90) return F(fmt(s,s<10?1:0),u[0]); if(s<5400) return F(fmt(s/60,1),u[1]); if(d<2) return F(fmt(d*24,1),u[2]); if(d<60) return F(fmt(d,1),u[3]); if(d<730) return F(fmt(d/30.44,1),u[4]); return F(fmt(d/365.25,1),u[5]); }
+function syncSpeed(){ $('speedOut').textContent=speedText(state.speed);
+  let cur=-1; document.querySelectorAll('#presets .spd').forEach((x,i)=>{ const on=Math.abs(Math.log(PRESETS[i]/state.speed))<0.02; x.classList.toggle('on',on); if(on) cur=i; });
+  // 휴대폰용 한 개짜리 속도 버튼: 누를 때마다 다음 단계로
+  const c=$('spdCycle'); c.textContent= cur>=0? t('perSec')+' '+t('presets')[cur] : speedText(state.speed); c.dataset.cur=cur; }
+const ICON_PAUSE='<svg viewBox="0 0 16 16"><rect x="3" y="2" width="3.5" height="12" rx="1"/><rect x="9.5" y="2" width="3.5" height="12" rx="1"/></svg>';
+const ICON_PLAY='<svg viewBox="0 0 16 16"><path d="M4 2l10 6-10 6z"/></svg>';
+function syncPlay(){ $('playBtn').innerHTML=state.paused?ICON_PLAY:ICON_PAUSE; $('playBtn').title=state.paused?t('play'):t('pause'); $('playBtn').setAttribute('aria-label',$('playBtn').title);
+  $('revBtn').title=t('reverse'); $('revBtn').setAttribute('aria-label',t('reverse')); }
+function togglePause(){ state.paused=!state.paused; syncPlay(); }
+$('playBtn').onclick=togglePause;
+$('revBtn').onclick=()=>{ state.dir*=-1; $('revBtn').classList.toggle('on',state.dir<0); };
+$('nowBtn').onclick=()=>{ orbitDays=rotDays=(Date.now()-J2000)/864e5; };
+$('speed').addEventListener('input',e=>{ state.speed=speedFromSlider(+e.target.value); syncSpeed(); });
+$('spdCycle').onclick=()=>{ const i=(+$('spdCycle').dataset.cur+1)%PRESETS.length; state.speed=PRESETS[i]; $('speed').value=sliderFromSpeed(state.speed); syncSpeed(); if(state.paused) togglePause(); };
+document.querySelectorAll('.grab').forEach(g=>g.onclick=()=>g.parentElement.classList.toggle('expanded'));
+// 휴대폰에서 아래 카드가 열려 있으면, 고른 천체가 카드에 가리지 않도록 화면 중심을 위로 올린다
+let lastOff=-1;
+function syncSheet(){
+  const hc=$('hCard'), card=(state.hist&&hc&&!hc.hidden)? hc : !$('info').hidden? $('info') : !$('bday').hidden? $('bday') : null;
+  document.body.classList.toggle('sheet',!!card);
+  const W=innerWidth,H=innerHeight; let ox=0, oy=0;
+  if(card){ const r=card.getBoundingClientRect();
+    if(W<=760&&H>520) oy=Math.round((r.height+66)/2);            // 휴대폰: 아래 시트만큼 위로
+    else if(r.left>W*0.4) ox=Math.round((W-r.left)/2);            // 컴퓨터·아이패드: 오른쪽 카드만큼 왼쪽으로
+    else if(r.right<W*0.6) ox=-Math.round(r.right/2);             // 왼쪽 카드(역사 이야기)만큼 오른쪽으로
+  }
+  const hv=$('hVert'); if(hv&&!hv.hidden&&W<=760){ const hd=hv.querySelector('.hvhead'); if(hd) oy=Math.round((H-hd.getBoundingClientRect().top)/2); ox=0; }   // 휴대폰 세로 연대표가 열리면 그 위쪽 공간 가운데로
+  const off=ox*10000+oy;
+  if(off!==lastOff){ lastOff=off; if(off) camera.setViewOffset(W,H,ox,oy,W,H); else camera.clearViewOffset(); }
+}
+
+/* ═════════ 설정 ═════════ */
+const mulFromSlider=v=>v<=0?0:Math.pow(10,(v-100)/50);
+const mulText=m=>m===0? t('mstop') : t('mx',{n:m<0.1?fmt(m,3):m<10?fmt(m,2):fmt(m,0)});
+function syncMul(){ $('orbitOut').textContent=mulText(state.orbitMul); $('rotOut').textContent=mulText(state.rotMul); }
+$('orbitMul').addEventListener('input',e=>{ state.orbitMul=mulFromSlider(+e.target.value); syncMul(); });
+$('rotMul').addEventListener('input',e=>{ state.rotMul=mulFromSlider(+e.target.value); syncMul(); });
+const sizeFromSlider=v=>state.mode==='real'? Math.pow(10,v/100*3.3) : 0.3*Math.pow(10,v/100);
+function syncSize(){ $('sizeOut').textContent=t('mx',{n:fmt(state.sizeMul,state.sizeMul<10?1:0)}); $('modeHint').textContent= state.mode==='real'? t('modeHintR'):t('modeHintC'); }
+$('size').addEventListener('input',e=>{ state.sizeMul=sizeFromSlider(+e.target.value); syncSize(); layout(); if(state.focus) controls.minDistance=state.focus.dispR*1.15; });
+function setMode(m){ if(state.mode===m) return; state.mode=m; $('modeC').classList.toggle('on',m==='compressed'); $('modeR').classList.toggle('on',m==='real');
+  $('size').value=m==='real'?0:52; state.sizeMul=sizeFromSlider(+$('size').value); syncSize(); layout(); update();
+  const f=state.focus;
+  if(f){ const p=worldPos(f,new THREE.Vector3()); controls.target.copy(p); camera.position.copy(p).add(new THREE.Vector3(0,0.4,1).normalize().multiplyScalar(viewDist(f))); lastTarget.copy(p); controls.minDistance=f.dispR*1.15; }
+  else { controls.target.set(0,0,0); camera.position.set(0,0.55,1).normalize().multiplyScalar(homeDist()); controls.minDistance=m==='real'?0.001:0.5; } }
+$('modeC').onclick=()=>setMode('compressed'); $('modeR').onclick=()=>setMode('real');
+$('optOrbits').onchange=e=>{ state.showOrbits=e.target.checked; applyVis(); };
+$('optLabels').onchange=e=>{ state.showLabels=e.target.checked; };
+$('optMoons').onchange=e=>{ state.showMoons=e.target.checked; applyVis(); };
+$('optBelts').onchange=e=>{ state.showBelts=e.target.checked; applyVis(); };
+// 역사 이야기에서 '그해까지 알려진 천체'만 보이게(state.year)
+const known=b=> !window.HIST||!HIST.ready||HIST.known(b);
+function applyVis(){ for(const b of bodies){ if(b.isSun) continue; const k=known(b); if(b.isMoon){ b.orbitFrame.visible=state.showMoons&&k; b.orbit.visible=state.showOrbits; } else { b.group.visible=k; b.orbit.visible=state.showOrbits&&k; if(b.ring) b.ring.visible=!window.HIST||!HIST.ready||HIST.ringKnown(b); } }
+  for(const [k,p] of Object.entries(belts)) p.visible=state.showBelts&&(!window.HIST||!HIST.ready||HIST.beltKnown(k)); }
+function closeSettings(){ $('settings').hidden=true; $('setBtn').setAttribute('aria-expanded','false'); document.body.classList.remove('setopen'); }
+$('setBtn').onclick=()=>{ const open=$('settings').hidden; $('settings').hidden=!open; $('setBtn').setAttribute('aria-expanded',String(open)); document.body.classList.toggle('setopen',open); if(open&&innerWidth<=760) $('info').hidden=true; };
+$('overviewBtn').onclick=overview; $('iClose').onclick=overview; $('brand').onclick=overview;
+
+/* ═════════ 언어 적용 ═════════ */
+function applyLang(){
+  document.documentElement.lang=lang; $('langSel').value=lang; document.title=t('title');
+  document.querySelectorAll('[data-i]').forEach(el=>{ const v=t(el.dataset.i); if(typeof v==='string') el.innerHTML=v; });
+  $('iClose').setAttribute('aria-label',t('overview')); $('setBtn').setAttribute('aria-label',t('settings'));
+  if(!bodies.length) return;
+  relabel(); repickNames(); buildPresets(); syncPlay(); syncMul(); syncSize(); if(state.focus&&!$('info').hidden) showInfo(state.focus);
+  if(introOn){ const i=+$('introLine').dataset.i; if(i>=0) $('introLine').textContent=t('intro')[i]; }
+  if(!$('bday').hidden) renderBday();
+  if(tour||state.cosmic) renderAddr(); relabelCos();
+  if(window.HIST&&HIST.ready) HIST.relang();
+}
+$('langSel').addEventListener('change',e=>{ lang=e.target.value; try{ localStorage.setItem('ou-lang',lang); }catch(err){} applyLang(); });
+
+/* ═════════ 누르기·가리키기·키보드 ═════════ */
+const ray=new THREE.Raycaster(); let downAt=null,mouse=null;
+const visiblePicks=()=>pickables.filter(o=>(!o.userData.body.isMoon||state.showMoons)&&known(o.userData.body));
+function pick(x,y){ ray.setFromCamera(new THREE.Vector2(x/canvas.clientWidth*2-1,-(y/canvas.clientHeight)*2+1),camera); const h=ray.intersectObjects(visiblePicks(),false)[0]; return h? h.object.userData.body:null; }
+canvas.addEventListener('pointerdown',e=>{ downAt=[e.clientX,e.clientY]; hideToast(); });
+canvas.addEventListener('pointerup',e=>{ if(!downAt||introOn||state.cosmic||tour||(state.hist&&(HIST.custom||HIST.film))) return; const dx=e.clientX-downAt[0],dy=e.clientY-downAt[1]; downAt=null; if(dx*dx+dy*dy>25) return; const b=pick(e.clientX,e.clientY); if(b) focusOn(b); });
+canvas.addEventListener('pointermove',e=>{ if(e.pointerType==='mouse'&&!downAt) mouse=[e.clientX,e.clientY]; });
+canvas.addEventListener('pointerleave',()=>{ mouse=null; setHover(null); });
+window.addEventListener('keydown',e=>{
+  if(e.target.closest&&e.target.closest('input,select')) return;
+  if(introOn){ if(e.key==='Escape') skipIntro(); return; }
+  if(tour||state.cosmic){ if(e.key==='Escape'){ if(tour&&!tour.ended) skipTour(); else endTour(); } return; }
+  if(state.hist&&window.HIST){ if(e.key==='Escape'){ if(!$('settings').hidden) closeSettings(); else HIST.close(); return; } if(e.key==='ArrowRight'){ HIST.next(); return; } if(e.key==='ArrowLeft'){ HIST.prev(); return; } if(/^[0-9]$/.test(e.key)) return; }
+  if(e.code==='Space'){ e.preventDefault(); togglePause(); }
+  else if(e.key==='Escape'){ if(!$('settings').hidden) closeSettings(); else overview(); }
+  else if(/^[0-9]$/.test(e.key)){ const list=[sun,...bodies.filter(b=>!b.isSun&&!b.isMoon)]; const b=list[+e.key]; if(b) focusOn(b); }
+});
+let toastTimer;
+function hideToast(){ $('toast').classList.add('gone'); clearTimeout(toastTimer); }
+
+function resize(){ renderer.setSize(innerWidth,innerHeight,false); camera.aspect=innerWidth/innerHeight; cosCam.aspect=camera.aspect; cosCam.updateProjectionMatrix(); lastOff=-1; camera.clearViewOffset(); camera.updateProjectionMatrix(); }
+window.addEventListener('resize',resize);
+function clockText(){ const d=new Date(J2000+orbitDays*864e5); if(isNaN(d)) return '—'; const y=d.getUTCFullYear(),p=n=>String(n).padStart(2,'0');
+  return (y<1? t('bc')+(1-y) : y)+'-'+p(d.getUTCMonth()+1)+'-'+p(d.getUTCDate())+' '+p(d.getUTCHours())+':'+p(d.getUTCMinutes())+' UTC'; }
+
+/* ═════════ 실제 위성 사진(NASA 블루 마블·블랙 마블) ═════════
+   earth-day.jpg(낮), earth-night.jpg(밤 불빛), earth-clouds.jpg(구름)가 페이지 옆에 있으면 쓴다. */
+const HAS_PHOTOS=true; // 사진 파일을 함께 올렸을 때 true
+function loadEarthPhotos(){
+  if(!HAS_PHOTOS) return;
+  const L=new THREE.TextureLoader(), aniso=renderer.capabilities.getMaxAnisotropy();
+  const prep=tx=>{ tx.encoding=THREE.sRGBEncoding; tx.anisotropy=aniso; return tx; };
+  L.load('earth-day.jpg',tx=>{ earthB.earthMat.map=prep(tx); earthB.earthMat.needsUpdate=true; refreshEarthThumb(); },undefined,()=>earthFallback());
+  L.load('earth-night.jpg',tx=>{ earthB.earthMat.emissiveMap=prep(tx); earthB.earthMat.emissive.set(0xffd9a0); earthB.earthMat.emissiveIntensity=1.4; earthB.earthMat.needsUpdate=true; },undefined,()=>{});
+  L.load('earth-clouds.png',tx=>{ tx.anisotropy=aniso; const m=earthB.clouds.material; m.map=null; m.alphaMap=tx; m.color.set(0xffffff); m.opacity=0.92; m.needsUpdate=true; },undefined,()=>{});
+  // 바다만 햇빛을 반사(바다 지도), 산맥 높낮이(지형 지도)
+  L.load('earth-water.jpg',tx=>{ const m=earthB.earthMat; m.specularMap=tx; m.specular.set(0x26323e); m.shininess=38; m.needsUpdate=true; },undefined,()=>{});
+  L.load('earth-topo.jpg',tx=>{ const m=earthB.earthMat; m.bumpMap=tx; m.bumpScale=0.012; m.needsUpdate=true; },undefined,()=>{});
+}
+
+/* ═════════ 우주 주소: 대한민국 → 지구 → 태양계 → 우리은하 → 국부은하군 → 라니아케아 → 관측 가능한 우주 ═════════
+   단위: 광년(ly). 태양이 원점. 은하·은하단의 방향은 실제 하늘 좌표(적경·적위)로 놓았다. */
+const cosScene=new THREE.Scene();
+const cosCam=new THREE.PerspectiveCamera(50,1,1e-3,1e13);
+let cosControls=null, cosBuilt=null, tour=null, cosFlight=null, addrIdx=-1;
+const cosItems=[], cosLabelDefs=[];
+let cosStages=null, sunSprite=null, cosWeb=null, cosCmb=null;
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const yieldUI=()=>new Promise(r=>setTimeout(r,0));
+const sm01=x=>{ x=Math.max(0,Math.min(1,x)); return x*x*(3-2*x); };
+// 카메라 거리(로그)에 따라 서서히 나타났다 사라지는 창
+function win(d,w){ const [a0,a1,b0,b1]=w, L=Math.log10(Math.max(d,1e-9));
+  const up= a1<=0? 1 : sm01((L-Math.log10(a0))/(Math.log10(a1)-Math.log10(a0)));
+  const dn= !isFinite(b1)? 1 : 1-sm01((L-Math.log10(b0))/(Math.log10(b1)-Math.log10(b0)));
+  return Math.min(up,dn); }
+
+const COS_TIME={value:0};
+function ptsMat(size){ return new THREE.ShaderMaterial({uniforms:{op:{value:0},sz:{value:size*renderer.getPixelRatio()},time:COS_TIME,amp:{value:0},tw:{value:0.12},att:{value:0}},
+  vertexShader:'#include <common>\n#include <logdepthbuf_pars_vertex>\nattribute vec3 col; attribute float s; attribute float ph; varying vec3 vC; uniform float sz; uniform float time; uniform float amp; uniform float tw; uniform float att;\nvoid main(){ vec3 p=position; if(amp>0.0){ p+=amp*vec3(sin(time*0.37+ph*6.1),sin(time*0.29+ph*4.3),sin(time*0.33+ph*5.7)); }\n float b=1.0-tw+tw*(0.5+0.5*sin(time*(0.5+fract(ph*7.0)*1.6)+ph*20.0)); vC=col*b;\n vec4 mv=modelViewMatrix*vec4(p,1.0); gl_Position=projectionMatrix*mv; float k= att>0.0? clamp(att/max(-mv.z,1e-6),0.45,2.4) : 1.0; gl_PointSize=sz*s*k; if(att>0.0) vC*=clamp(pow(k,1.6),0.35,1.6);\n#include <logdepthbuf_vertex>\n}',
+  fragmentShader:'#include <logdepthbuf_pars_fragment>\nvarying vec3 vC; uniform float op;\nvoid main(){\n#include <logdepthbuf_fragment>\n vec2 d=gl_PointCoord-0.5; float r=dot(d,d); if(r>0.25) discard; float a=smoothstep(0.25,0.0,r); gl_FragColor=vec4(vC*a*op,1.0); }',
+  transparent:true,depthWrite:false,blending:THREE.AdditiveBlending}); }
+function makePts(P,C,S,size,count){ const g=new THREE.BufferGeometry();
+  g.setAttribute('position',new THREE.BufferAttribute(P,3)); g.setAttribute('col',new THREE.BufferAttribute(C,3)); g.setAttribute('s',new THREE.BufferAttribute(S,1));
+  const PH=new Float32Array(S.length); for(let i=0;i<PH.length;i++) PH[i]=rnd()*TAU; g.setAttribute('ph',new THREE.BufferAttribute(PH,1));
+  if(count!=null) g.setDrawRange(0,count); const m=new THREE.Points(g,ptsMat(size)); m.frustumCulled=false; return m; }
+function addItem(obj,w,setOp){ cosScene.add(obj); cosItems.push({obj,w,setOp:setOp||(v=>{ obj.material.uniforms.op.value=v; })}); }
+
+// 나선 은하(원반은 XZ 평면, 중심이 원점)
+// 가장자리가 칼로 자른 듯 끊기지 않도록: 지수 분포 원반(바깥으로 갈수록 서서히 옅어짐) + 두꺼운 원반 + 막대·팽대부 + 둥근 별 헤일로
+function galaxyPts(n,R,o){
+  const P=new Float32Array(n*3),C=new Float32Array(n*3),S=new Float32Array(n), arms=o.arms||2, k=1/Math.tan((o.pitch||13)*DEG), br=o.bright||1;
+  const h=R*0.3, rmax=R*1.45, emax=1-Math.exp(-rmax/h), barA=o.barAngle||0.5, cb=Math.cos(barA), sb=Math.sin(barA);
+  for(let i=0;i<n;i++){ let x,y,z,c,sz; const u=rnd();
+    if(u<(o.bulge||0.18)){ // 막대·팽대부(세 축이 다른 타원체)
+      const a=gauss()*R*0.1*(1+(o.bar||0)*1.4), b=gauss()*R*0.075, cz=gauss()*R*0.06;
+      x=a*cb-b*sb; z=a*sb+b*cb; y=cz; c=mix([1,0.78,0.52],[1,0.94,0.82],rnd()); sz=0.9+rnd()*0.8; }
+    else if(u<(o.bulge||0.18)+0.07){ // 별 헤일로: 둥글고 아주 흐림
+      const r=R*0.35*(-Math.log(1-rnd()*0.97)); const v=new THREE.Vector3(gauss(),gauss(),gauss()).normalize().multiplyScalar(r); x=v.x; y=v.y*0.7; z=v.z;
+      c=mul([1,0.9,0.75],0.35); sz=0.6+rnd()*0.4; }
+    else { // 원반: 반지름은 지수 분포, 팔은 바깥으로 갈수록 퍼짐
+      const r=-h*Math.log(1-rnd()*emax)+R*0.04, f=r/R; let th;
+      if(rnd()<0.6){ th=Math.floor(rnd()*arms)*TAU/arms+Math.log(Math.max(r,R*0.08)/(R*0.08))*k*0.5+gauss()*(0.18+0.25*f);
+        c= rnd()<0.06? [1,0.5,0.62] : mix([0.58,0.72,1],[1,0.96,0.9],rnd()*0.7); sz=0.7+rnd()*1.1; }
+      else { th=rnd()*TAU; c=mul(mix([1,0.85,0.68],[0.75,0.78,0.88],rnd()),0.6); sz=0.6+rnd()*0.6; }
+      const thick= rnd()<0.2? R*0.035 : R*0.012; // 두꺼운 원반 20%
+      x=Math.cos(th)*r; z=Math.sin(th)*r; y=gauss()*thick*(1+f*0.8); // 바깥쪽이 살짝 부푼다(플레어)
+      const fade=Math.exp(-Math.max(0,f-0.9)*2.2); c=mul(c,fade); }
+    P[i*3]=x; P[i*3+1]=y; P[i*3+2]=z; C[i*3]=c[0]*br; C[i*3+1]=c[1]*br; C[i*3+2]=c[2]*br; S[i]=sz; }
+  return makePts(P,C,S,o.size||1.6);
+}
+function blobPts(n,R,flat,color,br){ const P=new Float32Array(n*3),C=new Float32Array(n*3),S=new Float32Array(n);
+  for(let i=0;i<n;i++){ P[i*3]=gauss()*R; P[i*3+1]=gauss()*R*flat; P[i*3+2]=gauss()*R*0.55; const c=mix(color,[1,1,1],rnd()*0.4); C[i*3]=c[0]*br; C[i*3+1]=c[1]*br; C[i*3+2]=c[2]*br; S[i]=0.8+rnd()*0.6; }
+  return makePts(P,C,S,1.6); }
+// 멀리서 본 은하 모습: 나선 팔·중심 팽대부를 그린 원반 그림(가산 합성)
+function galaxyTex(o){ const S=MOBILE?256:512, h=S/2, cv=document.createElement('canvas'); cv.width=cv.height=S; const c=cv.getContext('2d'); c.globalCompositeOperation='lighter';
+  let g=c.createRadialGradient(h,h,0,h,h,h); g.addColorStop(0,o.core||'rgba(255,225,180,.9)'); g.addColorStop(0.18,o.mid||'rgba(190,190,220,.35)'); g.addColorStop(0.62,'rgba(80,100,170,.08)'); g.addColorStop(1,'rgba(0,0,0,0)'); c.fillStyle=g; c.fillRect(0,0,S,S);
+  const n=o.n||4000, arms=o.arms||2, k=1/Math.tan((o.pitch||14)*DEG), sc=S/512;
+  for(let i=0;i<n;i++){ const r=0.1+0.86*Math.sqrt(rnd()), th=Math.floor(rnd()*arms)*TAU/arms+Math.log(r/0.1)*k*0.5+gauss()*(o.scatter||0.3);
+    const x=h+Math.cos(th)*r*h*0.94, y=h+Math.sin(th)*r*h*0.94, a=((1-r)*0.32+0.06).toFixed(3), q=rnd();
+    c.fillStyle= q<0.07? 'rgba(255,130,170,'+a+')' : q<0.75? 'rgba(165,195,255,'+a+')' : 'rgba(255,235,205,'+a+')'; const sz=(1+rnd()*2.2)*sc; c.fillRect(x,y,sz,sz); }
+  g=c.createRadialGradient(h,h,0,h,h,h*(o.bulge||0.22)); g.addColorStop(0,'rgba(255,245,220,1)'); g.addColorStop(0.5,'rgba(255,215,160,.5)'); g.addColorStop(1,'rgba(255,190,130,0)'); c.fillStyle=g; c.fillRect(0,0,S,S);
+  const t=new THREE.CanvasTexture(cv); t.encoding=THREE.sRGBEncoding; return t; }
+function fuzzTex(){ const cv=document.createElement('canvas'); cv.width=cv.height=64; const c=cv.getContext('2d'), g=c.createRadialGradient(32,32,0,32,32,32);
+  g.addColorStop(0,'rgba(255,255,255,1)'); g.addColorStop(0.35,'rgba(255,255,255,.45)'); g.addColorStop(1,'rgba(255,255,255,0)'); c.fillStyle=g; c.fillRect(0,0,64,64); const t=new THREE.CanvasTexture(cv); t.encoding=THREE.sRGBEncoding; return t; }
+function diskPlane(tex,R,spin){ const m=new THREE.Mesh(new THREE.PlaneGeometry(1,1),new THREE.MeshBasicMaterial({map:tex,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,side:THREE.DoubleSide,opacity:0}));
+  m.scale.setScalar(R*2.6); m.rotation.set(-Math.PI/2,0,spin||0); return m; }
+function placeDisk(obj,center,normal,spin){ const g=new THREE.Group(); g.add(obj); obj.rotation.y=spin||0; g.position.copy(center); g.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),normal.clone().normalize()); return g; }
+function tiltedNormal(los,incl,seed){ const a=new THREE.Vector3(0,1,0).cross(los).normalize(); if(a.lengthSq()<1e-6) a.set(1,0,0); a.applyAxisAngle(los,seed); return los.clone().multiplyScalar(Math.cos(incl*DEG)).addScaledVector(a,Math.sin(incl*DEG)).normalize(); }
+
+async function buildCos(){
+  const gp=eqToScene(192.859,27.128);            // 은하 북극
+  const gcDir=eqToScene(266.405,-28.936), gc=gcDir.clone().multiplyScalar(26000); // 은하 중심(궁수자리 A*)
+  const m31Dir=eqToScene(10.685,41.269), m31=m31Dir.clone().multiplyScalar(2.537e6);
+  const m33Dir=eqToScene(23.462,30.660), m33=m33Dir.clone().multiplyScalar(2.73e6);
+  const lmc=eqToScene(80.894,-69.756).multiplyScalar(1.6e5), smc=eqToScene(13.187,-72.829).multiplyScalar(2.0e5);
+  const gaDir=eqToScene(243.9,-60.9), GA=gaDir.clone().multiplyScalar(2.2e8);   // 거대 인력체(노르마 은하단 쪽)
+  const ALL=[0,0,6e7,3e8];
+  // 태양 주변 별(약 1천 광년 안)
+  { const n=MOBILE?1500:3000,P=new Float32Array(n*3),C=new Float32Array(n*3),S=new Float32Array(n);
+    for(let i=0;i<n;i++){ P[i*3]=gauss()*500; P[i*3+1]=gauss()*120; P[i*3+2]=gauss()*500; const q=rnd(), c=q<0.15?[0.75,0.82,1]:q<0.7?[1,0.97,0.92]:q<0.9?[1,0.85,0.68]:[1,0.7,0.55]; C.set(c,i*3); S[i]=0.7+Math.pow(rnd(),3)*1.6; }
+    addItem(placeDisk(makePts(P,C,S,1.8),new THREE.Vector3(),gp),[0,0,6e3,5e4],v=>{ cosItems.local.material.uniforms.op.value=v; });
+    cosItems.local=cosScene.children[cosScene.children.length-1].children[0]; }
+  await yieldUI();
+  // 우리은하: 막대 나선 은하, 반지름 5만 광년
+  const mw=galaxyPts(MOBILE?30000:60000,50000,{arms:4,pitch:12,bulge:0.18,bar:0.8,bright:MOBILE?0.75:0.55});
+  const gMW=placeDisk(mw,gc,gp,0.4); addItem(gMW,ALL,v=>{ mw.material.uniforms.op.value=v; });
+  { const p=diskPlane(galaxyTex({arms:4,pitch:12,bulge:0.2}),50000,0.4); gMW.add(p); cosItems.push({obj:p,w:[1.5e5,9e5,6e7,3e8],setOp:v=>{ p.material.opacity=v*0.95; }}); }
+  await yieldUI();
+  const a31=galaxyPts(MOBILE?12000:24000,1.1e5,{arms:2,pitch:9,bulge:0.25,bright:0.6});
+  const gA31=placeDisk(a31,m31,tiltedNormal(m31Dir,77,0.6),1.1); addItem(gA31,ALL,v=>{ a31.material.uniforms.op.value=v; });
+  { const p=diskPlane(galaxyTex({arms:2,pitch:9,bulge:0.28,core:'rgba(255,220,170,1)',scatter:0.22,n:5000}),1.1e5,1.1); gA31.add(p); cosItems.push({obj:p,w:[1.5e5,9e5,6e7,3e8],setOp:v=>{ p.material.opacity=v; }}); }
+  const a33=galaxyPts(MOBILE?4000:8000,3e4,{arms:2,pitch:20,bulge:0.08,bright:0.7});
+  const gA33=placeDisk(a33,m33,tiltedNormal(m33Dir,54,2.0),0.3); addItem(gA33,ALL,v=>{ a33.material.uniforms.op.value=v; });
+  { const p=diskPlane(galaxyTex({arms:2,pitch:22,bulge:0.1,core:'rgba(220,230,255,.8)',scatter:0.45,n:2500}),3e4,0.3); gA33.add(p); cosItems.push({obj:p,w:[1.5e5,9e5,6e7,3e8],setOp:v=>{ p.material.opacity=v; }}); }
+  const bL=blobPts(MOBILE?1500:3000,7000,0.35,[0.65,0.75,1],0.8), bS=blobPts(MOBILE?800:1500,3500,0.5,[0.7,0.78,1],0.8);
+  const gL=new THREE.Group(); gL.add(bL); gL.position.copy(lmc); const gS=new THREE.Group(); gS.add(bS); gS.position.copy(smc);
+  addItem(gL,ALL,v=>{ bL.material.uniforms.op.value=v; }); addItem(gS,ALL,v=>{ bS.material.uniforms.op.value=v; });
+  // 국부은하군의 왜소 은하들(우리은하·안드로메다 둘레에 모여 있음) + 흐릿한 빛무리
+  { const fz=fuzzTex(), N=80, n=N*16, P=new Float32Array(n*3),C=new Float32Array(n*3),S=new Float32Array(n); let k=0;
+    for(let g=0;g<N;g++){ const u=rnd(), base= u<0.42? gc.clone() : u<0.84? m31.clone() : m31.clone().multiplyScalar(0.5); const sp= u<0.84? 2.2e5 : 1.4e6;
+      const c=base.add(new THREE.Vector3(gauss(),gauss(),gauss()).multiplyScalar(sp)), rs=3000+Math.pow(rnd(),2)*12000, tint=rnd()<0.5? 0xc8d4ff : 0xffe2c0;
+      const sp2=new THREE.Sprite(new THREE.SpriteMaterial({map:fz,color:tint,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,opacity:0})); sp2.position.copy(c); sp2.scale.setScalar(rs*5.5);
+      const base_op=0.5+rnd()*0.4; addItem(sp2,[1.5e5,9e5,6e7,3e8],v=>{ sp2.material.opacity=v*base_op; });
+      for(let j=0;j<16;j++,k++){ P[k*3]=c.x+gauss()*rs*0.5; P[k*3+1]=c.y+gauss()*rs*0.5; P[k*3+2]=c.z+gauss()*rs*0.5; C.set([0.8,0.84,0.95],k*3); S[k]=0.8; } }
+    addItem(makePts(P,C,S,1.3),[1.5e5,9e5,6e7,3e8]); }
+  { const fz=fuzzTex(); [[gc,3.2e5,0x9fb4ff,0.22],[m31,3.8e5,0xa8b8ff,0.24],[m33,1.2e5,0xb8c8ff,0.18]].forEach(([c,r,col,o])=>{
+      const h=new THREE.Sprite(new THREE.SpriteMaterial({map:fz,color:col,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,opacity:0})); h.position.copy(c); h.scale.setScalar(r*2);
+      addItem(h,[3e5,1.5e6,6e7,3e8],v=>{ h.material.opacity=v*o; }); }); }
+  // 바깥의 다른 은하군들(조각가자리군·M81군 등 방향은 무작위): 화면 뒤를 채우는 먼 은하들
+  { const n=MOBILE?2500:5000, P=new Float32Array(n*3),C=new Float32Array(n*3),S=new Float32Array(n); const v=new THREE.Vector3();
+    for(let i=0;i<n;i++){ v.set(gauss(),gauss(),gauss()).normalize().multiplyScalar(8e6+Math.pow(rnd(),0.6)*4e7); P[i*3]=v.x; P[i*3+1]=v.y; P[i*3+2]=v.z;
+      const b=0.35+rnd()*0.5, c=rnd()<0.6?[0.75,0.82,1]:[1,0.88,0.7]; C[i*3]=c[0]*b; C[i*3+1]=c[1]*b; C[i*3+2]=c[2]*b; S[i]=0.8+rnd()*1.2; }
+    addItem(makePts(P,C,S,1.6),[1e6,4e6,1.2e8,5e8]); }
+  // 우리은하 ↔ 안드로메다 거리 표시(점선)
+  { const g=new THREE.BufferGeometry().setFromPoints([gc.clone(),m31.clone()]); const ln=new THREE.Line(g,new THREE.LineDashedMaterial({color:0x9fb2d8,dashSize:6e4,gapSize:5e4,transparent:true,opacity:0,depthWrite:false})); ln.computeLineDistances();
+    addItem(ln,[1.5e6,4e6,2.5e7,8e7],v=>{ ln.material.opacity=v*0.55; }); }
+  await yieldUI();
+  // 라니아케아: 은하들이 거대 인력체 쪽으로 흘러드는 줄기
+  { SEED=77; const lines=MOBILE?380:700, per=110, extra=3000, nb=MOBILE?6000:12000, n=lines*per+extra+nb;
+    const P=new Float32Array(n*3),C=new Float32Array(n*3),S=new Float32Array(n); let k=0; const v=new THREE.Vector3(),d=new THREE.Vector3(),rd=new THREE.Vector3(), q=1/1.1e8;
+    for(let L=0;L<lines;L++){
+      if(L<3) v.set(gauss(),gauss(),gauss()).multiplyScalar(1e7); // 우리은하를 지나는 줄기
+      else { rd.set(gauss(),gauss(),gauss()).normalize(); v.copy(GA).addScaledVector(rd,2.6e8*(0.45+0.55*Math.cbrt(rnd()))); }
+      for(let st=0;st<per/2;st++){ d.copy(GA).sub(v); const dist=d.length(); if(dist<1.2e7) break; d.multiplyScalar(1/dist);
+        d.x+=(noise(v.x*q,v.y*q,v.z*q)-0.5)*2.6; d.y+=(noise(v.x*q+31,v.y*q,v.z*q)-0.5)*2.6; d.z+=(noise(v.x*q,v.y*q+57,v.z*q)-0.5)*2.6; d.normalize();
+        v.addScaledVector(d,5.5e6);
+        for(let j=0;j<2;j++){ P[k*3]=v.x+gauss()*2.2e6; P[k*3+1]=v.y+gauss()*2.2e6; P[k*3+2]=v.z+gauss()*2.2e6;
+          const c=mix([1,0.84,0.55],[0.45,0.62,1],Math.min(1,dist/2.4e8)); C[k*3]=c[0]*0.8; C[k*3+1]=c[1]*0.8; C[k*3+2]=c[2]*0.8; S[k]=0.9+rnd()*0.5; k++; } }
+      if(L%50===0) await yieldUI(); }
+    for(let i=0;i<extra;i++,k++){ P[k*3]=GA.x+gauss()*1.4e7; P[k*3+1]=GA.y+gauss()*1.4e7; P[k*3+2]=GA.z+gauss()*1.4e7; C.set([1,0.86,0.6],k*3); S[k]=1.2; }
+    for(let i=0;i<nb;i++,k++){ rd.set(gauss(),gauss(),gauss()).normalize(); const r=2.8e8+rnd()*3.5e8; P[k*3]=GA.x+rd.x*r; P[k*3+1]=GA.y+rd.y*r; P[k*3+2]=GA.z+rd.z*r; C.set([0.3,0.36,0.6],k*3); S[k]=0.8; }
+    const lan=makePts(P,C,S,1.5,k); lan.material.uniforms.amp.value=1.2e6; lan.material.uniforms.tw.value=0.3; addItem(lan,[1.5e7,1.5e8,6e9,3e10]); }
+  await yieldUI();
+  // 관측 가능한 우주: 우주 거미줄(능선 모양 잡음으로 실·벽 구조를 흉내)
+  { SEED=123; const n=MOBILE?35000:70000, R=4.65e10, P=new Float32Array(n*3),C=new Float32Array(n*3),S=new Float32Array(n); let k=0,tries=0;
+    while(k<n&&tries<n*40){ tries++; const x=rnd()*2-1,y=rnd()*2-1,z=rnd()*2-1,rr=x*x+y*y+z*z; if(rr>1||rr<0.0004) continue;
+      const f=fbm(x*5+3,y*5,z*5,3), ridge=1-Math.abs(2*f-1); if(rnd()>Math.pow(ridge,9)) continue;
+      P[k*3]=x*R; P[k*3+1]=y*R; P[k*3+2]=z*R; const b=0.3+ridge*0.6, c=rnd()<0.15?[1,0.8,0.55]:[0.6,0.66,1]; C[k*3]=c[0]*b; C[k*3+1]=c[1]*b; C[k*3+2]=c[2]*b; S[k]=0.8+ridge; k++;
+      if(tries%15000===0) await yieldUI(); }
+    cosWeb=makePts(P,C,S,1.5,k); const U=cosWeb.material.uniforms; U.amp.value=2.6e8; U.tw.value=0.5; addItem(cosWeb,[3e9,2.5e10,Infinity,Infinity]); }
+  // 우주 배경 복사(관측의 끝)
+  { const tx=genTex(512,256,321,(la,lo,x,y,z)=>{ const n=fbm(x*8,y*8,z*8,4); return mix(hex('#1c3a9a'),hex('#e8702e'),n*1.8-0.4); });
+    const mat=new THREE.ShaderMaterial({uniforms:{map:{value:tx},op:{value:0}},side:THREE.DoubleSide,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,
+      vertexShader:'#include <common>\n#include <logdepthbuf_pars_vertex>\nvarying vec2 vUv; varying float vF;\nvoid main(){ vUv=uv; vec4 mv=modelViewMatrix*vec4(position,1.0); vec3 n=normalize(normalMatrix*normal); vF=1.0-abs(dot(n,normalize(-mv.xyz))); gl_Position=projectionMatrix*mv;\n#include <logdepthbuf_vertex>\n}',
+      fragmentShader:'#include <logdepthbuf_pars_fragment>\nuniform sampler2D map; uniform float op; varying vec2 vUv; varying float vF;\nvoid main(){\n#include <logdepthbuf_fragment>\n vec3 c=texture2D(map,vUv).rgb; float rim=0.12+1.4*pow(vF,3.0); gl_FragColor=vec4(c*rim*op,1.0); }'});
+    const m=new THREE.Mesh(new THREE.SphereGeometry(4.6e10,96,48),mat);
+    cosCmb=m; addItem(m,[3e10,1.2e11,Infinity,Infinity],v=>{ mat.uniforms.op.value=v*0.55; }); }
+  // 태양 표시
+  { const cv=document.createElement('canvas'); cv.width=cv.height=128; const c=cv.getContext('2d'), g=c.createRadialGradient(64,64,0,64,64,64);
+    g.addColorStop(0,'rgba(255,240,200,1)'); g.addColorStop(0.2,'rgba(255,200,120,.7)'); g.addColorStop(1,'rgba(255,150,60,0)'); c.fillStyle=g; c.fillRect(0,0,128,128);
+    const tx=new THREE.CanvasTexture(cv); sunSprite=new THREE.Sprite(new THREE.SpriteMaterial({map:tx,blending:THREE.AdditiveBlending,depthWrite:false,transparent:true}));
+    addItem(sunSprite,[0,0,1.5e5,1.5e6],v=>{ sunSprite.material.opacity=v; }); }
+  // 이름표
+  const cmbP=new THREE.Vector3(0.35,0.55,0.76).normalize().multiplyScalar(4.4e10);
+  cosLabelDefs.push({k:'sun',p:new THREE.Vector3(),w:[0,0,1.2e5,6e5],here:true},{k:'mw',p:gc,w:[3e4,1.2e5,3e6,1e7]},{k:'lmc',p:lmc,w:[5e4,1.5e5,1.5e6,5e6]},{k:'smc',p:smc,w:[5e4,1.5e5,1.5e6,5e6]},
+    {k:'m31',p:m31,w:[8e5,3e6,1e8,4e8]},{k:'dist',p:gc.clone().lerp(m31,0.5),w:[1.5e6,4e6,2.5e7,8e7]},{k:'m33',p:m33,w:[1.5e6,4e6,6e7,2e8]},{k:'here',p:gc,w:[3e6,1e7,2e9,8e9],here:true},{k:'ga',p:GA,w:[6e7,3e8,6e9,2.5e10]},{k:'cmb',p:cmbP,w:[4e10,1.2e11,Infinity,Infinity]});
+  const box=$('cosLabels'); cosLabelDefs.forEach(L=>{ const el=document.createElement('div'); el.className='cl'+(L.here?' here':''); el.innerHTML='<i></i><span></span>'; box.append(el); L.el=el; }); relabelCos();
+  // 장면별 카메라(목표점, 바라보는 방향, 거리)
+  const side=m31Dir.clone().cross(gp).normalize(), side2=gaDir.clone().cross(gp).normalize();
+  cosStages={
+    start:{t:new THREE.Vector3(),dir:gp.clone().multiplyScalar(0.55).addScaledVector(gcDir,-0.8).normalize(),dist:1500},
+    3:{t:gc.clone().multiplyScalar(0.8),dir:gp.clone().multiplyScalar(0.9).addScaledVector(gcDir,-0.45).normalize(),dist:1.55e5},
+    4:{t:gc.clone().lerp(m31,0.42),dir:side.clone().multiplyScalar(0.85).addScaledVector(gp,0.35).normalize(),dist:3.0e6,
+       lineUp:side.clone().multiplyScalar(0.85).addScaledVector(gp,0.35).normalize().cross(m31.clone().sub(gc).normalize()).normalize()},
+    5:{t:GA.clone().multiplyScalar(0.93),dir:side2.clone().multiplyScalar(0.65).addScaledVector(gp,0.6).normalize(),dist:8e8},
+    6:{t:new THREE.Vector3(),dir:side2.clone().multiplyScalar(0.8).addScaledVector(gp,0.45).normalize(),dist:1.45e11}
+  };
+}
+function relabelCos(){ const L=t('cl'); cosLabelDefs.forEach(d=>{ if(d.el) d.el.querySelector('span').textContent=L[d.k]; }); }
+function initCos(){ cosCam.aspect=camera.aspect; cosCam.updateProjectionMatrix();
+  cosControls=new THREE.OrbitControls(cosCam,canvas); cosControls.enabled=false; cosControls.enableDamping=true; cosControls.dampingFactor=0.08; cosControls.zoomSpeed=2; cosControls.minDistance=50; cosControls.maxDistance=3e11; }
+const Y_UP=new THREE.Vector3(0,1,0);
+const stageUp=st=>{ if(!(st.lineUp&&camera.aspect>=1)) return Y_UP; return st.lineUp.dot(Y_UP)<0? st.lineUp.clone().negate() : st.lineUp; };
+// 국부은하군은 우리은하–안드로메다(250만 광년)가 화면 폭(세로 화면은 높이)의 약 60%를 차지하게
+const stageDist=st=> st.lineUp? (camera.aspect>=1? 4.4e6/camera.aspect : 4.6e6) : st.dist*fitK();
+function cosPlace(st){ cosCam.up.copy(stageUp(st)); cosControls.target.copy(st.t); cosCam.position.copy(st.t).addScaledVector(st.dir,stageDist(st)); cosCam.lookAt(st.t); }
+function cosGo(st,dur){ cosFlight={t:0,dur,fromT:cosControls.target.clone(),fromC:cosCam.position.clone(),toT:st.t.clone(),dir:st.dir.clone(),dist:stageDist(st),fromUp:cosCam.up.clone(),toUp:stageUp(st).clone()}; }
+function stepCos(dt){
+  if(cosFlight){ const f=cosFlight; f.t=Math.min(1,f.t+dt/f.dur); const e=ease(f.t);
+    const a=f.fromC.clone().sub(f.fromT), d0=Math.max(a.length(),1e-6), D=Math.exp(Math.log(d0)+(Math.log(f.dist)-Math.log(d0))*e);
+    const frac= Math.abs(f.dist-d0)>1e-9? Math.max(0,Math.min(1,(D-d0)/(f.dist-d0))) : e; // 멀어지는 만큼만 목표점을 옮겨 화면이 튀지 않게
+    cosControls.target.lerpVectors(f.fromT,f.toT,frac);
+    cosCam.up.copy(f.fromUp).lerp(f.toUp,e).normalize();
+    cosCam.position.copy(cosControls.target).addScaledVector(a.normalize().lerp(f.dir,e).normalize(),D); cosCam.lookAt(cosControls.target);
+    if(f.t>=1) cosFlight=null; }
+  else if(cosControls.enabled) cosControls.update();
+  const d=cosCam.position.distanceTo(cosControls.target);
+  cosItems.forEach(it=>{ const v=win(d,it.w)*cosG; it.obj.visible=v>0.003; it.setOp(v); });
+  COS_TIME.value+=dt;
+  if(cosWeb){ cosWeb.rotation.y+=dt*0.0091; cosWeb.material.uniforms.att.value=cosCam.position.length(); if(cosCmb) cosCmb.rotation.y=cosWeb.rotation.y; }
+  if(sunSprite) sunSprite.scale.setScalar(cosCam.position.length()*0.03);
+}
+const _cp=new THREE.Vector3();
+function updateCosLabels(){ const w=canvas.clientWidth,h=canvas.clientHeight, d=cosCam.position.distanceTo(cosControls.target);
+  cosLabelDefs.forEach(L=>{ const a=win(d,L.w); _cp.copy(L.p).project(cosCam); const show=a>0.02&&_cp.z<1&&_cp.z>-1;
+    L.el.style.display=show?'':'none'; if(!show) return; L.el.style.opacity=a.toFixed(2);
+    const lx=Math.min((_cp.x*0.5+0.5)*w-4.5, w-L.el.offsetWidth-8); L.el.style.transform='translate('+Math.max(4,lx).toFixed(1)+'px,'+((-_cp.y*0.5+0.5)*h).toFixed(1)+'px) translateY(-50%)'; }); }
+
+/* 여행 진행 */
+let cosG=1; // 우주 장면 전체 밝기(이어 붙일 때 서서히)
+function beginBlend(){ flight=null; state.focus=null;
+  const dir=camera.position.clone().sub(controls.target).normalize(), base=camera.position.distanceTo(controls.target);
+  state.blend={dir,base,d0:0.004}; cosFlight=null; cosControls.target.set(0,0,0); cosCam.position.copy(dir).multiplyScalar(0.004); cosCam.lookAt(0,0,0);
+  cosG=0; document.body.classList.add('cosmic'); $('cosLabels').hidden=false; }
+function stepBlend(dt){ const B=state.blend; stepCos(dt);
+  const d=cosCam.position.distanceTo(cosControls.target), r=d/B.d0, dir=cosCam.position.clone().sub(cosControls.target).normalize();
+  // 태양계 카메라를 우주 카메라와 '태양 중심 같은 비율'로 맞춘다: 같은 방향·같은 회전 → 두 장면의 태양이 화면 같은 자리에 겹친다
+  controls.target.copy(cosControls.target).multiplyScalar(B.base/B.d0); camera.position.copy(cosCam.position).multiplyScalar(B.base/B.d0); camera.quaternion.copy(cosCam.quaternion);
+  const g=sm01(Math.log10(Math.max(r,1))/1.3); cosG=g; stars.material.opacity=1-g;
+  renderer.autoClear=false; renderer.clear(); renderer.render(scene,camera); renderer.clearDepth(); renderer.render(cosScene,cosCam); renderer.autoClear=true; updateCosLabels();
+  if(r>300) endBlend(); }
+function endBlend(){ state.blend=null; cosG=1; stars.material.opacity=1; setCosmic(true); }
+function setCosmic(on){ state.cosmic=on; document.body.classList.toggle('cosmic',on); $('cosLabels').hidden=!on; if(!on) cosControls.enabled=false; }
+async function fadeTo(fn){ $('fade').classList.add('on'); await sleep(650); fn(); await sleep(120); $('fade').classList.remove('on'); }
+function renderAddr(){ const A=t('addr'), C=t('cap'); const tr=$('addrTrail'); tr.innerHTML='';
+  for(let i=0;i<=Math.min(addrIdx,A.length-1);i++){ const s=document.createElement('span'); s.textContent=A[i]; tr.append(s); }
+  if(tour&&tour.ended){ $('addrNow').textContent=t('tourEnd'); $('addrCap').textContent=''; }
+  else { $('addrNow').textContent= addrIdx>=0? A[addrIdx] : ''; $('addrCap').textContent= addrIdx>=0? C[addrIdx] : ''; } }
+async function setAddr(i){ if(window.SND&&i!==addrIdx) SND.sfx('addr',{step:i}); $('addrNow').classList.add('dim'); $('addrCap').classList.add('dim'); await sleep(280); addrIdx=i; renderAddr(); $('addrNow').classList.remove('dim'); $('addrCap').classList.remove('dim'); }
+function koreaView(mult){ update(); scene.updateMatrixWorld(true);
+  const ep=worldPos(earthB,new THREE.Vector3()), sunDir=ep.clone().negate().normalize(), up=new THREE.Vector3(0,1,0);
+  const la=36.5*DEG, lo=127.8*DEG, kr=new THREE.Vector3(Math.cos(la)*Math.cos(lo),Math.sin(la),-Math.cos(la)*Math.sin(lo)).transformDirection(earthB.mesh.matrixWorld);
+  const night=Math.max(0,-kr.dot(sunDir)); const dir=kr.addScaledVector(sunDir,night*0.55).addScaledVector(up,0.1).normalize();
+  state.focus=earthB; flight=null; controls.target.copy(ep); lastTarget.copy(ep); camera.position.copy(ep).addScaledVector(dir,koreaDist()); }
+function tourUIOn(){ closeSettings(); $('info').hidden=true; $('bday').hidden=true; document.body.classList.add('tour'); $('tour').hidden=false; $('tourEnd').hidden=true; $('tourSkip').hidden=false; controls.enabled=false; cosControls.enabled=false; }
+async function startTour(asIntro){
+  const tok={ended:false,intro:!!asIntro}; tour=tok; if(window.SND) SND.scene('tour');
+  const T= asIntro? {k:1967,e:2822,s:3420,g:5.56,st:[[4,3.85],[5,3.85],[6,4.28]],gap:513} : {k:2970,e:3870,s:4500,g:7.2,st:[[4,5.4],[5,5.85],[6,6.3]],gap:810}; tourUIOn(); addrIdx=-1; renderAddr();
+  if(!cosBuilt) cosBuilt=buildCos();
+  if(state.cosmic) await fadeTo(()=>setCosmic(false));
+  if(tour!==tok) return;
+  state.speed=1/1440; syncSpeed(); if(state.paused) togglePause();
+  koreaView(1.8);
+  setAddr(0); await sleep(T.k); if(tour!==tok) return;
+  setAddr(1); flyFollow(earthB,earthB.dispR*4.6*fitK(),T.e/1200,0.2); await sleep(T.e); if(tour!==tok) return;
+  setAddr(2); flyHome(T.s/1200); await sleep(T.s); if(tour!==tok) return;
+  await cosBuilt; if(tour!==tok) return;
+  beginBlend(); setAddr(3); cosGo(cosStages[3],T.g); await sleep(T.g*1000+T.gap); if(tour!==tok) return;
+  for(const [i,dur] of T.st){ if(tour!==tok) return; setAddr(i); cosGo(cosStages[i],dur); await sleep(dur*1000+T.gap); }
+  if(tour!==tok) return; finishTourUI();
+}
+function finishTourUI(){ if(!tour) return; tour.ended=true; if(window.SND) SND.sfx('arrive'); addrIdx=6; setAddr(6).then(()=>{ $('addrNow').textContent=t('tourEnd'); $('addrCap').textContent=''; });
+  cosControls.autoRotate=true; cosControls.autoRotateSpeed=0.114; // 둘을 합쳐 한 바퀴 약 5분
+  $('tourEnd').hidden=false; $('tourAgain').hidden=!!tour.intro; $('tourBday').hidden=!tour.intro; $('tourSkip').hidden=true; cosControls.enabled=true; }
+async function skipTour(){ const tok={ended:false,intro:!!(tour&&tour.intro)}; tour=tok; flight=null;
+  if(!cosBuilt) cosBuilt=buildCos(); await cosBuilt; if(tour!==tok) return;
+  const go=()=>{ if(state.blend) endBlend(); setCosmic(true); cosFlight=null; cosPlace(cosStages[6]); };
+  if(state.cosmic) go(); else await fadeTo(go);
+  finishTourUI(); }
+async function endTour(){ tour=null; if(window.SND) SND.scene('explore'); if(state.blend) endBlend();
+  await fadeTo(()=>{ setCosmic(false); state.focus=null; flight=null; controls.target.set(0,0,0); camera.position.set(0,0.55,1).normalize().multiplyScalar(homeDist()); lastTarget.set(0,0,0); });
+  document.body.classList.remove('tour'); $('tour').hidden=true; controls.enabled=true; controls.minDistance=state.mode==='real'?0.001:0.5;
+  state.speed=DEFAULT_SPEED; $('speed').value=sliderFromSpeed(DEFAULT_SPEED); syncSpeed(); markPicker(); }
+
+/* ═════════ 시작 ═════════ */
+let lastT=performance.now(),tick=0;
+function loop(now){
+  const raw=Math.max(0,(now-lastT)/1000),dt=Math.min(0.1,raw); lastT=now;
+  if(!state.paused){ const dd=state.speed*dt*state.dir; orbitDays+=dd*state.orbitMul; rotDays+=dd*state.rotMul; }
+  if(state.target!=null&&orbitDays>=state.target){ orbitDays=rotDays=(Date.now()-J2000)/864e5; state.target=null; state.speed=1/86400; $('speed').value=sliderFromSpeed(state.speed); syncSpeed(); }
+  update(); if(state.hist&&window.HIST) HIST.frame(Math.min(raw,0.5));
+  if(!state.cosmic&&!state.blend){ stepCamera(Math.min(raw,0.5)); controls.update(); } if(state.hist&&window.HIST&&HIST.post) HIST.post(); stars.position.copy(camera.position);
+  if(mouse&&tick%3===0){ const b=pick(mouse[0],mouse[1]); if(b!==hovered) setHover(b); }
+  if(state.blend){ stepBlend(Math.min(raw,0.5)); }
+  else if(state.cosmic){ stepCos(Math.min(raw,0.5)); renderer.render(cosScene,cosCam); updateCosLabels(); }
+  else if(state.hist&&window.HIST&&HIST.custom){ renderer.render(HIST.scene,camera); HIST.labels(); }
+  else { renderer.render(scene,camera); updateLabels(); }
+  if(tick%4===0) syncSheet();
+  if(++tick%6===0){ const note=(state.orbitMul!==1||state.rotMul!==1)? '<small>'+t('dateNote')+'</small>':''; $('clock').innerHTML=clockText()+note; liveInfo(); }
+  requestAnimationFrame(loop);
+}
+function init(){
+  sun=buildSun(); for(const p of PLANETS){ const b=buildPlanet(p); if(p.id==='jupiter') jupiter=b; if(p.id==='earth') earthB=b; }
+  for(const m of MOONS) buildMoon(m,bodies.find(b=>b.id===m[1]));
+  buildBelts(); buildStars();
+  for(const b of bodies) b.thumb=thumb(b,b.isMoon?48:72);
+  state.sizeMul=sizeFromSlider(52); resize(); layout(); update(); applyVis();
+  loadEarthPhotos();
+  buildPicker(); bindIntroBday(); initCos(); applyLang();
+  controls.minDistance=0.01;
+  window.OU={THREE,scene,camera,controls,renderer,canvas,state,bodies,D,kepler,orbitPoint,nameOf,t,fmt,J2000,MOBILE,applyVis,focusOn,overview,fitK,
+    lang:()=>lang, body:id=>bodies.find(b=>b.id===id), byName:n=>bodies.find(b=>b.names&&b.names[1]===n),
+    getDays:()=>orbitDays, setDays:d=>{ orbitDays=rotDays=d; state.target=null; },
+    setSpeed:d=>{ state.speed=d; state.dir=1; $('revBtn').classList.remove('on'); $('speed').value=sliderFromSpeed(d); syncSpeed(); if(state.paused) togglePause(); },
+    resetSpeed:()=>OU.setSpeed(DEFAULT_SPEED),
+    clearFocus:()=>{ state.focus=null; flight=null; $('info').hidden=true; markPicker(); },
+    home:()=>{ state.focus=null; flight=null; controls.target.set(0,0,0); camera.position.set(0,0.55,1).normalize().multiplyScalar(homeDist()); lastTarget.set(0,0,0);
+      controls.minDistance=state.mode==='real'?0.001:0.5; controls.maxDistance=(state.mode==='real'?9000:140)*6; markPicker(); },
+    hidePanels:()=>{ $('info').hidden=true; $('bday').hidden=true; closeSettings(); },
+    earthMap:()=>earthB.earthMat.map, sunMap:()=>sun.mesh.material.map};
+  if(window.HIST) HIST.init(OU);
+  $('loading').hidden=true; requestAnimationFrame(loop);
+  // 뒤쪽 탭에서 열렸다면 화면에 보일 때 첫 화면 연출을 시작
+  let visits=1; try{ visits=(parseInt(localStorage.getItem('ou-visits'),10)||0)+1; localStorage.setItem('ou-visits',String(visits)); }catch(e){}
+  const pickIntro=()=> (visits%2===1)? startTour(true) : runIntro(); // 첫 방문=2안(우주 주소), 다음=1안, 그 뒤 번갈아
+  if(document.hidden){ const go=()=>{ if(!document.hidden){ document.removeEventListener('visibilitychange',go); pickIntro(); } }; document.addEventListener('visibilitychange',go); } else pickIntro();
+}
+applyLang();
+setTimeout(()=>(()=>{ try{ init(); }catch(err){ $('loadStep').textContent=err.message; console.error(err); } })(),60);
+})();
+</script>
+<script src="audio.js?v=2"></script>
+<script src="poem.js?v=8"></script>
+<script src="history.js?v=32"></script>
+<link rel="stylesheet" href="guide.css?v=1">
+<script src="guide.js?v=1"></script>
+
+</body>
+</html>

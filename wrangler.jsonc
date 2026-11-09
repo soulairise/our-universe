@@ -1,0 +1,18 @@
+{
+  // 우리의 우주 — 정적 페이지(public) + 우주 길잡이 API(src/worker.js, /api/* 만)
+  "name": "our-universe",
+  "main": "src/worker.js",
+  "compatibility_date": "2026-10-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*"]
+  },
+  "workers_dev": true,
+  "routes": [ { "pattern": "cosmos.shala.kr", "custom_domain": true } ],
+  // 프롬프트 버전 — 트레이스의 version 으로 남아 배포 전후를 가른다
+  "vars": { "PROMPT_VERSION": "v1", "RELEASE": "guide-v1" },
+  "observability": { "enabled": true }
+}
