@@ -182,7 +182,7 @@ async function chat(req, env, ctx) {
   )
 
   if (error) return json({ error: 'llm', traceId }, 502)
-  return json({ traceId, reply, version, ms: end - start })
+  return json({ traceId, reply, version, ms: end - start, usage: usage ? { input: usage.input_tokens, output: usage.output_tokens } : null })
 }
 
 async function feedback(req, env, ctx) {
