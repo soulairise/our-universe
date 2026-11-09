@@ -30,5 +30,6 @@ body.tour #guideBtn,body.tour #guide{opacity:0;pointer-events:none}
   #guide{left:12px;right:12px;width:auto;top:auto;bottom:calc(12px + env(safe-area-inset-bottom,0px));height:min(70vh,560px)}
   body.guideopen #bottom{opacity:0;pointer-events:none}
 }
-@media (max-width:420px){ #top .iconbtn{padding:0 9px} }
+/* 버튼이 7개라 좁은 휴대폰에서는 간격·여백을 줄여 화면 안에 넣는다 */
+@media (max-width:420px){ #top .topbtns{gap:3px!important} #top .iconbtn{padding:0 7px!important} }
 @media (prefers-reduced-motion:reduce){#guide,#guide .gwait{animation:none}}
