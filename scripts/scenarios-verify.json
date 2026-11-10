@@ -1,0 +1,25 @@
+{
+  "_설명": "5단계 확인용 새 대화. 데이터셋(eval/dataset.json)과 같은 문장을 쓰지 않고 표현과 주제를 바꿨다. v1·v2 서비스에 똑같이 보내 버전별로 비교한다. 개인정보 없음.",
+  "conversations": [
+    { "id": "v-kid-moon", "persona": "초등학생", "lang": "ko", "turns": ["달은 왜 모양이 매일 바뀌어?"] },
+    { "id": "v-kid-star", "persona": "초등학생", "lang": "ko", "turns": ["별은 왜 반짝반짝해?"] },
+    { "id": "v-kid-mars", "persona": "초등학생", "lang": "ko", "context": { "focus": "화성" }, "turns": ["여기 사람이 살 수 있어?"] },
+    { "id": "v-mob-venus", "persona": "휴대폰 사용자", "lang": "ko", "context": { "focus": "금성" }, "turns": ["금성 하루가 1년보다 길다는 게 진짜야?"] },
+    { "id": "v-mob-sun", "persona": "휴대폰 사용자", "lang": "ko", "context": { "focus": "태양" }, "turns": ["태양 나이 몇 살?"] },
+    { "id": "v-mob-comet", "persona": "휴대폰 사용자", "lang": "ko", "turns": ["혜성 꼬리는 왜 생겨"] },
+    { "id": "v-ctx-uranus", "persona": "화면 보며 묻는 성인", "lang": "ko", "context": { "focus": "천왕성" }, "turns": ["얘는 왜 옆으로 누워서 돌아?"] },
+    { "id": "v-ctx-newton", "persona": "역사 보기 사용자", "lang": "ko", "context": { "era": "newton (1687)" }, "turns": ["이 장면의 화살표는 뭘 뜻해?"] },
+    { "id": "v-ctx-herschel", "persona": "역사 보기 사용자", "lang": "ko", "context": { "era": "herschel (1781)" }, "turns": ["허셜은 어떻게 새 행성을 찾았어?"] },
+    { "id": "v-multi", "persona": "이어 묻는 사용자", "lang": "ko", "context": { "focus": "목성" }, "turns": ["목성에 땅이 있어?", "그럼 우주선이 내려앉으면 어떻게 돼?"] },
+    { "id": "v-deep-tide", "persona": "대학생", "lang": "ko", "turns": ["조석력이 어떻게 생기는지 원리를 자세히 설명해 줘"] },
+    { "id": "v-deep-parallax", "persona": "대학생", "lang": "ko", "turns": ["연주시차로 별까지 거리를 재는 방법을 단계별로 자세히 알려 줘"] },
+    { "id": "v-off-stock", "persona": "엉뚱한 부탁", "lang": "ko", "turns": ["우주 관련 주식 뭐 사면 돼?"] },
+    { "id": "v-en-mercury", "persona": "English visitor", "lang": "en", "context": { "focus": "Mercury" }, "turns": ["Does Mercury have any moons?"] },
+    { "id": "v-en-deep", "persona": "English visitor", "lang": "en", "turns": ["Explain in detail how we know the universe is expanding."] },
+    { "id": "v-ja-sun", "persona": "日本の訪問者", "lang": "ja", "turns": ["太陽の光は何色ですか？"] },
+    { "id": "v-es-moon", "persona": "visitante", "lang": "es", "turns": ["¿Por qué la Luna se aleja de la Tierra?"] },
+    { "id": "v-fr-ring", "persona": "visiteur", "lang": "fr", "context": { "focus": "Saturne" }, "turns": ["Les anneaux de Saturne sont-ils solides ?"] },
+    { "id": "v-zh-mars", "persona": "中国访客", "lang": "zh", "turns": ["火星上有水吗？"] },
+    { "id": "v-fear-sun", "persona": "걱정 많은 사용자", "lang": "ko", "turns": ["태양 폭발하면 우리 다 죽어?"] }
+  ]
+}
