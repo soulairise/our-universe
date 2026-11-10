@@ -21,13 +21,19 @@ for (const c of conversations) {
     history.push({ role: 'user', content: q })
     let res, j
     for (let attempt = 0; attempt < 3; attempt++) {
-      res = await fetch(`${base}/api/chat`, {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ sessionId, lang: c.lang, context: c.context || {}, tags: [tag, c.persona.slice(0, 30)], messages: history }),
-      })
-      j = await res.json().catch(() => ({}))
-      if (res.status !== 429) break
+      try {
+        res = await fetch(`${base}/api/chat`, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json', 'user-agent': 'our-universe-sim/1.0' },
+          body: JSON.stringify({ sessionId, lang: c.lang, context: c.context || {}, tags: [tag, c.persona.slice(0, 30)], messages: history }),
+        })
+        j = await res.json().catch(() => ({}))
+      } catch (e) {
+        // 네트워크가 잠깐 끊기면(v5 확인 중 한 번 멈춤) 기다렸다 다시 보낸다
+        console.error('연결 오류, 다시 시도:', String(e).slice(0, 80))
+        res = { status: 0 }; j = {}
+      }
+      if (res.status !== 429 && res.status !== 0) break
       await sleep(20000)
     }
     const row = { id: c.id, persona: c.persona, lang: c.lang, context: c.context || {}, turn: history.filter((m) => m.role === 'user').length, q, status: res.status, traceId: j.traceId, version: j.version, ms: j.ms, usage: j.usage, reply: j.reply || null }
